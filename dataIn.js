@@ -1,5 +1,5 @@
 // <------------ maintenace Mode set -------------
-var maintenace = false;
+var maintenace = true;
 
 
 const swup = new Swup();
@@ -59,10 +59,10 @@ jQuery(document).ready(function ($) {
         document.querySelector('.art-app-wrapper').style.display = 'none';
         document.querySelector('.maintenance-container').style.display = 'block';
     }
-    else{
+    else {
         document.querySelector('.art-mobile-top-bar').style.display = 'block';
         document.querySelector('.art-app-wrapper').style.display = 'block';
-        document.querySelector('.maintenance-container').style.display = 'none'; 
+        document.querySelector('.maintenance-container').style.display = 'none';
     }
 
     // --------- Infor Bar ---------------
