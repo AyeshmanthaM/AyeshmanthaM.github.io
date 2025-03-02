@@ -1,0 +1,132 @@
+import { Project } from '../types';
+
+export const projects: Project[] = [
+  {
+    id: 'smart-home-automation',
+    title: 'Smart Home Automation System',
+    description: 'A comprehensive IoT-based home automation system with voice control, energy monitoring, and adaptive learning capabilities.',
+    fullDescription: 'This project involved designing and implementing a complete smart home system that integrates various sensors and actuators throughout the home. The system features voice control via a custom wake-word engine, detailed energy monitoring with usage analytics, and machine learning algorithms that adapt to user behavior patterns over time.',
+    challenges: 'One of the main challenges was creating a reliable and low-latency communication protocol between the various nodes in the system. I developed a custom mesh network solution using ESP32 microcontrollers that maintained connectivity even when individual nodes went offline. Another challenge was optimizing the power consumption of battery-operated sensors, which I solved by implementing an adaptive duty cycling algorithm.',
+    results: 'The final system reduced energy consumption by 23% in test homes while improving user convenience through automated routines and voice control. The solution has been deployed in over 50 homes with a 98% satisfaction rate among users.',
+    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'iot',
+    technologies: ['ESP32', 'MQTT', 'TensorFlow Lite', 'PCB Design', 'C/C++', 'Node.js'],
+    date: 'June 2023',
+    githubUrl: '#',
+    liveUrl: '#'
+  },
+  {
+    id: 'industrial-robot-arm',
+    title: 'Precision Industrial Robot Arm',
+    description: 'A 6-axis robotic arm with sub-millimeter precision for industrial assembly applications, featuring advanced path planning and collision avoidance.',
+    fullDescription: 'This project involved the development of a high-precision robotic arm for industrial assembly tasks. I designed both the mechanical components and the control system, focusing on achieving sub-millimeter positioning accuracy while maintaining smooth motion profiles. The system includes advanced path planning algorithms and real-time collision detection and avoidance capabilities.',
+    challenges: 'Achieving the required precision while maintaining a reasonable cost was the primary challenge. I implemented a hybrid control system that combines feedback from optical encoders with inertial measurement units to compensate for mechanical flexing under load. Another significant challenge was developing efficient inverse kinematics algorithms that could run on the embedded controller with minimal latency.',
+    results: 'The robotic arm achieved a positioning accuracy of ±0.08mm, exceeding the project requirements. The system has been deployed in a manufacturing facility where it has increased assembly throughput by 35% while reducing defect rates by 28% compared to the previous manual process.',
+    image: 'https://images.unsplash.com/photo-1563203369-26f2e4a5ccf7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'mechatronics',
+    technologies: ['STM32', 'ROS', 'Servo Motors', 'IMU Sensors', 'C++', 'Python'],
+    date: 'March 2023',
+    githubUrl: '#',
+    liveUrl: null
+  },
+  {
+    id: 'interactive-light-installation',
+    title: 'Interactive Light Installation',
+    description: 'A responsive light and sound installation that reacts to visitor movement and interactions, creating an immersive artistic experience.',
+    fullDescription: 'This interactive installation uses an array of addressable LED strips and spatial audio to create an immersive environment that responds to visitor movements. The system uses computer vision to track people within the space and generates dynamic light patterns and spatial audio that follow and respond to their movements and gestures.',
+    challenges: 'Creating a responsive system with minimal latency was crucial for maintaining the illusion of interactivity. I developed a highly optimized computer vision pipeline that could track multiple visitors simultaneously at 60fps on modest hardware. Managing the power and data requirements for thousands of individually addressable LEDs also presented significant engineering challenges.',
+    results: 'The installation was featured in three major art exhibitions and received critical acclaim for its responsiveness and the seamless integration of technology and artistic expression. Visitor surveys showed that 92% rated the experience as "highly engaging" or "transformative."',
+    image: 'https://images.unsplash.com/photo-1550985543-49bee3167284?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80',
+    category: 'interactive',
+    technologies: ['Raspberry Pi', 'OpenCV', 'WS2812B LEDs', 'Max/MSP', 'Python', 'C++'],
+    date: 'November 2022',
+    githubUrl: '#',
+    liveUrl: '#'
+  },
+  {
+    id: 'autonomous-delivery-robot',
+    title: 'Autonomous Delivery Robot',
+    description: 'A self-navigating robot designed for last-mile delivery in urban environments, featuring obstacle avoidance and secure package handling.',
+    fullDescription: 'This project involved developing a compact autonomous robot for last-mile package delivery in urban settings. The robot uses a combination of LiDAR, cameras, and ultrasonic sensors to navigate sidewalks and pedestrian areas while avoiding obstacles. It includes a secure package compartment that can only be unlocked by the intended recipient using a smartphone app.',
+    challenges: 'Developing robust navigation algorithms that could handle the unpredictable nature of pedestrian areas was the primary challenge. I implemented a hierarchical planning system that combines global path planning with local reactive behaviors to navigate safely around pedestrians and obstacles. Ensuring reliable operation in various weather conditions also required significant testing and refinement.',
+    results: 'The robot successfully completed over 500 test deliveries with a 98.5% success rate. It demonstrated the ability to navigate complex urban environments while maintaining safe operation around pedestrians. The project has attracted interest from several logistics companies for potential commercial deployment.',
+    image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'automation',
+    technologies: ['ROS', 'LiDAR', 'NVIDIA Jetson', 'Computer Vision', 'C++', 'Python'],
+    date: 'August 2022',
+    githubUrl: '#',
+    liveUrl: null
+  },
+  {
+    id: 'wearable-health-monitor',
+    title: 'Wearable Health Monitoring System',
+    description: 'A compact, energy-efficient wearable device that continuously monitors vital signs and provides real-time health insights and alerts.',
+    fullDescription: 'This wearable health monitoring system combines multiple sensors to track heart rate, blood oxygen levels, temperature, and activity patterns. The device processes this data locally to provide immediate feedback while also securely transmitting it to a smartphone app for long-term tracking and analysis. The system includes configurable alerts for abnormal readings and can share data with healthcare providers.',
+    challenges: 'Balancing power consumption with continuous monitoring capabilities was a significant challenge. I developed an adaptive sampling algorithm that adjusts sensor polling rates based on activity levels and detected anomalies. Ensuring accurate readings during physical activity also required sophisticated signal processing to filter out motion artifacts.',
+    results: 'The final device achieves a battery life of 7+ days while maintaining clinical-grade accuracy in its measurements. In validation testing against medical equipment, the device showed 97% correlation for heart rate and 95% for blood oxygen measurements. The system has been adopted for a clinical trial monitoring patients with chronic conditions.',
+    image: 'https://images.unsplash.com/photo-1557825835-70d97c4aa567?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'embedded',
+    technologies: ['nRF52', 'BLE', 'Sensor Fusion', 'PCB Design', 'C', 'Swift'],
+    date: 'May 2022',
+    githubUrl: '#',
+    liveUrl: '#'
+  },
+  {
+    id: 'agricultural-monitoring',
+    title: 'Precision Agricultural Monitoring System',
+    description: 'A network of solar-powered sensors that monitor soil conditions, weather patterns, and crop health to optimize irrigation and resource use.',
+    fullDescription: 'This system consists of a network of solar-powered sensor nodes deployed throughout agricultural fields to monitor soil moisture, temperature, humidity, and other environmental factors. The data is collected and analyzed to provide farmers with actionable insights for optimizing irrigation, fertilization, and pest management. The system includes a web dashboard and mobile app for real-time monitoring and control.',
+    challenges: 'Designing sensor nodes that could operate reliably in harsh outdoor conditions with minimal maintenance was the primary challenge. I developed a ruggedized enclosure with efficient thermal management and implemented a power management system that ensures continuous operation even during extended periods of low sunlight. Creating a reliable long-range wireless network for data transmission across large fields also required careful RF engineering.',
+    results: 'Farms using this system have reported water savings of 30-40% and yield increases of 15-25% compared to traditional methods. The system has been deployed on over 2,000 acres of farmland across different crop types and climate zones, demonstrating its versatility and effectiveness.',
+    image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'iot',
+    technologies: ['LoRaWAN', 'Solar Power', 'ESP32', 'Soil Sensors', 'C/C++', 'React'],
+    date: 'February 2022',
+    githubUrl: '#',
+    liveUrl: '#'
+  },
+  {
+    id: 'cnc-controller',
+    title: 'Advanced CNC Controller System',
+    description: 'A high-performance controller for CNC machines with advanced features like tool path optimization, vibration compensation, and remote monitoring.',
+    fullDescription: 'This project involved developing a next-generation controller for CNC machines that combines high-performance motion control with advanced features like real-time tool path optimization, vibration compensation, and remote monitoring capabilities. The system includes a custom-designed control board with a powerful microcontroller and dedicated motion co-processors.',
+    challenges: 'Achieving the required precision and speed while implementing advanced features was the main challenge. I developed a multi-core architecture where dedicated processors handle motion control while others manage higher-level functions. Implementing effective vibration compensation required developing sophisticated algorithms that could predict and counteract machine resonances in real-time.',
+    results: 'The controller achieved a 40% reduction in machining time while improving surface finish quality by 35% compared to conventional controllers. It has been adopted by several machine shops and has enabled them to take on more precise and complex jobs that were previously beyond their capabilities.',
+    image: 'https://images.unsplash.com/photo-1565106430482-8f6e74349ca1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'mechatronics',
+    technologies: ['STM32', 'FPGA', 'Stepper Motors', 'G-code', 'C/C++', 'Python'],
+    date: 'October 2021',
+    githubUrl: '#',
+    liveUrl: null
+  },
+  {
+    id: 'interactive-museum-exhibit',
+    title: 'Interactive Museum Exhibit',
+    description: 'A hands-on educational exhibit that combines physical interfaces with digital content to create an engaging learning experience about renewable energy.',
+    fullDescription: 'This interactive museum exhibit educates visitors about renewable energy through a combination of physical models and digital simulations. Visitors can manipulate physical controls to adjust parameters in a simulated power grid, seeing in real-time how different energy sources and consumption patterns affect system stability, cost, and environmental impact. The exhibit includes multiple interactive stations connected to a central visualization display.',
+    challenges: 'Creating intuitive physical interfaces that could withstand continuous use by visitors of all ages was a significant challenge. I designed robust custom controllers with clear visual feedback and implemented a fault-tolerant system architecture that could recover gracefully from any component failure. Ensuring that the educational content was both scientifically accurate and accessible to visitors with varying levels of prior knowledge also required careful design and extensive user testing.',
+    results: 'The exhibit has been installed in three science museums and has been experienced by over 100,000 visitors. Evaluation studies show that visitors spend an average of 12 minutes at the exhibit (3x the museum average) and demonstrate significant improvements in their understanding of renewable energy concepts after interacting with it.',
+    image: 'https://images.unsplash.com/photo-1503387837-b154d5074bd2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1531&q=80',
+    category: 'interactive',
+    technologies: ['Arduino', 'Unity3D', 'Touch Sensors', 'LED Matrices', 'C#', 'C++'],
+    date: 'July 2021',
+    githubUrl: '#',
+    liveUrl: '#'
+  },
+  {
+    id: 'automated-testing-system',
+    title: 'Automated Electronics Testing System',
+    description: 'A modular system for automated testing of electronic assemblies, featuring computer vision for defect detection and comprehensive data logging.',
+    fullDescription: 'This automated testing system is designed for electronic assemblies in a production environment. It combines electrical testing (continuity, resistance, capacitance) with computer vision inspection to detect both functional and visual defects. The system features a modular design that can be quickly reconfigured for different products and includes comprehensive data logging for quality control and traceability.',
+    challenges: 'Developing a system that could reliably test a wide variety of electronic assemblies with minimal reconfiguration time was the main challenge. I implemented a modular hardware architecture with standardized interfaces and a flexible software framework that allows test sequences to be defined through a graphical interface without programming. Training the computer vision system to reliably detect defects across different product variants also required developing sophisticated image processing algorithms.',
+    results: 'The system reduced testing time by 75% while increasing defect detection rates by 30% compared to manual testing. It has been deployed in two manufacturing facilities and has processed over 500,000 units with a false positive/negative rate below 0.1%.',
+    image: 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
+    category: 'automation',
+    technologies: ['PLC', 'OpenCV', 'LabVIEW', 'SQL Database', 'Python', 'C#'],
+    date: 'April 2021',
+    githubUrl: '#',
+    liveUrl: null
+  }
+];
+
+export const featuredProjects = projects.slice(0, 3);
