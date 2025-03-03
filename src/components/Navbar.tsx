@@ -49,10 +49,10 @@ const Navbar: React.FC = () => {
             </motion.div>
             <div className="flex flex-col">
               <span className="font-bold text-xl tracking-tight">
-                <span className="text-blue-600 dark:text-blue-400">Tech</span>Portfolio
+                <span className="text-blue-600 dark:text-blue-400">Ayeshmantha</span>Maduranga
               </span>
               <span className="text-xs text-gray-600 dark:text-gray-400">
-                Embedded Systems & Mechatronics
+                Innovator | Designer | Developer
               </span>
             </div>
           </Link>

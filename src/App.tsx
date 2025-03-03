@@ -9,10 +9,12 @@ import ProjectDetail from './pages/ProjectDetail';
 import Skills from './pages/Skills';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Maintenance from './pages/Maintenance';
 import ThemeToggle from './components/ThemeToggle';
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [maintenanceMode, setMaintenanceMode] = useState<boolean>(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -21,6 +23,9 @@ function App() {
     } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
       setTheme('light');
     }
+    
+    //<============= You can toggle this to true to enable maintenance mode ====================
+    setMaintenanceMode(false);
   }, []);
 
   useEffect(() => {
@@ -32,6 +37,17 @@ function App() {
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
+
+  if (maintenanceMode) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="*" element={<Maintenance />} />
+          <Route path="/contact" element={<Contact />} />
+        </Routes>
+      </Router>
+    );
+  }
 
   return (
     <Router>
@@ -54,6 +70,7 @@ function App() {
               <Route path="/skills" element={<Skills />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/maintenance" element={<Maintenance />} />
             </Routes>
           </main>
           <Footer />
