@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Project } from '../types';
+import { getCategoryColorClasses, getCardClasses } from '../theme/colors';
 
 interface ProjectCardProps {
   project: Project;
@@ -17,7 +18,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       whileHover={{ y: -5 }}
-      className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
+      className={`${getCardClasses()} hover:shadow-xl transition-all`}
     >
       <div className="h-48 overflow-hidden">
         <img 
@@ -29,13 +30,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
       
       <div className="p-6">
         <div className="flex justify-between items-start mb-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-            project.category === 'embedded' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-            project.category === 'mechatronics' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-            project.category === 'interactive' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-            project.category === 'automation' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
-            'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColorClasses(project.category)}`}>
             {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400">{project.date}</span>

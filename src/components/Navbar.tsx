@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, Cpu, BrainCircuit as Circuit, Layers } from 'lucide-react';
+import { colors } from '../theme/colors';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,13 +44,13 @@ const Navbar: React.FC = () => {
             <motion.div
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.5 }}
-              className="text-blue-600 dark:text-blue-400"
+              className={`${colors.accent.blue} ${colors.accentDark.blue}`}
             >
               <Circuit size={32} />
             </motion.div>
             <div className="flex flex-col">
               <span className="font-bold text-xl tracking-tight">
-                <span className="text-blue-600 dark:text-blue-400">Ayeshmantha</span>Maduranga
+                <span className={`${colors.accent.blue} ${colors.accentDark.blue}`}>Ayeshmantha</span>Maduranga
               </span>
               <span className="text-xs text-gray-600 dark:text-gray-400">
                 Innovator | Designer | Developer
@@ -65,7 +66,7 @@ const Navbar: React.FC = () => {
                 to={link.path}
                 className={`relative font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
                   location.pathname === link.path
-                    ? 'text-blue-600 dark:text-blue-400'
+                    ? colors.accent.blue + ' ' + colors.accentDark.blue
                     : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -73,7 +74,7 @@ const Navbar: React.FC = () => {
                 {location.pathname === link.path && (
                   <motion.div
                     layoutId="navbar-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+                    className={`absolute -bottom-1 left-0 right-0 h-0.5 ${colors.accent.blue} ${colors.accentDark.blue}`}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}

@@ -11,6 +11,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Maintenance from './pages/Maintenance';
 import ThemeToggle from './components/ThemeToggle';
+import { colors } from './theme/colors';
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -51,7 +52,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <div className={`min-h-screen ${colors.background.light} ${colors.background.dark} ${colors.text.light} ${colors.text.dark} transition-colors duration-300`}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

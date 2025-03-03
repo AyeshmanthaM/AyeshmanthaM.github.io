@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectCard from '../components/ProjectCard';
 import { projects } from '../data/projects';
+import { getPrimaryButtonClasses, getSecondaryButtonClasses } from '../theme/colors';
 
 const Projects: React.FC = () => {
   const [filter, setFilter] = useState<string>('all');
@@ -50,8 +51,8 @@ const Projects: React.FC = () => {
                   onClick={() => setFilter(category.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     filter === category.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      ? getPrimaryButtonClasses()
+                      : getSecondaryButtonClasses()
                   }`}
                 >
                   {category.name}

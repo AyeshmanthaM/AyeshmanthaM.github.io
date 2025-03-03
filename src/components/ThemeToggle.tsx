@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon } from 'lucide-react';
+import { colors } from '../theme/colors';
 
 interface ThemeToggleProps {
   theme: 'light' | 'dark';
@@ -18,7 +19,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, toggleTheme }) => {
       {theme === 'dark' ? (
         <Sun size={20} className="text-yellow-400" />
       ) : (
-        <Moon size={20} className="text-blue-600" />
+        <Moon size={20} className={colors.accent.blue} />
       )}
     </motion.button>
   );

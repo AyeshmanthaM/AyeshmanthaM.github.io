@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Github, ExternalLink, Calendar, Tag } from 'lucide-react';
 import { projects } from '../data/projects';
+import { getCategoryColorClasses, getCardClasses } from '../theme/colors';
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +36,7 @@ const ProjectDetail: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden">
+          <div className={`${getCardClasses()} shadow-xl overflow-hidden`}>
             <div className="h-80 overflow-hidden">
               <img 
                 src={project.image} 
@@ -46,13 +47,7 @@ const ProjectDetail: React.FC = () => {
             
             <div className="p-8">
               <div className="flex flex-wrap items-center gap-4 mb-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  project.category === 'embedded' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                  project.category === 'mechatronics' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                  project.category === 'interactive' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                  project.category === 'automation' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
-                  'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColorClasses(project.category)}`}>
                   {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
                 </span>
                 

@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Cpu, BrainCircuit as Circuit, Layers, Zap, Code, Wrench } from 'lucide-react';
 import ProjectCard from '../components/ProjectCard';
 import { featuredProjects } from '../data/projects';
+import { getPrimaryButtonClasses, getCardClasses } from '../theme/colors';
+import { TypeAnimation } from 'react-type-animation';
 
 const Home: React.FC = () => {
   const containerVariants = {
@@ -42,21 +44,52 @@ const Home: React.FC = () => {
             className="max-w-3xl"
           >
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              <span className="text-blue-600 dark:text-blue-400">Embedded Systems</span> & 
-              <span className="text-purple-600 dark:text-purple-400"> Mechatronics</span> Engineer
+              <span className="text-blue-600 dark:text-blue-400">Discover My</span>
+              <span className="text-purple-600 dark:text-purple-400"> Tech</span> &
+              <span className="text-purple-600 dark:text-purple-400"> Design </span>
+              Space!
             </h1>
-            <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-8">
-              Bringing hardware to life with innovative solutions at the intersection of 
+            <div
+              className="text-xl md:text-2xl mb-8 mt-8"
+              style={{
+                fontFamily: 'Roboto Mono', fontSize: '1.5em',
+                display: 'inline-block'
+              }}
+            >
+              &lt;<span className="text-yellow-600 dark:text-yellow-300">code</span>&gt;
+              <TypeAnimation
+                sequence={[
+                  'I Build Tech Innovation',
+                  1000,
+                  'I Build automation tools',
+                  1000,
+                  'I Design Interactive-media',
+                  1000,
+                  'I develop Embedded Systems',
+                  1000,
+                  'I develop software solutions',
+                  1000
+                ]}
+                wrapper="span"
+                speed={50}
+                repeat={Infinity}
+              />
+              &lt;<span className="text-yellow-600 dark:text-yellow-300">/code</span>&gt;
+            </div>
+
+            <p className="text-x1 text-gray-600 dark:text-gray-300 mb-8">
+              Bringing hardware to life with innovative solutions at the intersection of
               electronics, mechanics, and interactive multimedia.
             </p>
+
             <div className="flex flex-wrap gap-4">
               <Link to="/projects">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium flex items-center space-x-2 shadow-lg"
+                  className={`${getPrimaryButtonClasses()} px-6 py-3 rounded-md font-medium flex items-center space-x-2 shadow-lg`}
                 >
-                  <span>View Projects</span>
+                  <span>EXPLORE NOW</span>
                   <ChevronRight size={18} />
                 </motion.button>
               </Link>
@@ -72,7 +105,7 @@ const Home: React.FC = () => {
             </div>
           </motion.div>
         </div>
-        
+ 
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -114,7 +147,7 @@ const Home: React.FC = () => {
           >
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
             >
               <div className="text-blue-600 dark:text-blue-400 mb-4">
                 <Cpu size={40} />
@@ -128,7 +161,7 @@ const Home: React.FC = () => {
 
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
             >
               <div className="text-purple-600 dark:text-purple-400 mb-4">
                 <Wrench size={40} />
@@ -142,7 +175,7 @@ const Home: React.FC = () => {
 
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
             >
               <div className="text-green-600 dark:text-green-400 mb-4">
                 <Layers size={40} />
@@ -156,7 +189,7 @@ const Home: React.FC = () => {
 
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
             >
               <div className="text-red-600 dark:text-red-400 mb-4">
                 <Circuit size={40} />
@@ -170,7 +203,7 @@ const Home: React.FC = () => {
 
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
             >
               <div className="text-amber-600 dark:text-amber-400 mb-4">
                 <Zap size={40} />
@@ -184,7 +217,7 @@ const Home: React.FC = () => {
 
             <motion.div
               variants={itemVariants}
-              className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
             >
               <div className="text-teal-600 dark:text-teal-400 mb-4">
                 <Code size={40} />
