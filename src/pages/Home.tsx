@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Cpu, BrainCircuit as Circuit, Layers, Zap, Code, Wrench } from 'lucide-react';
 import ProjectCard from '../components/ProjectCard';
 import { featuredProjects } from '../data/projects';
-import { getPrimaryButtonClasses, getCardClasses } from '../theme/colors';
+import { getPrimaryButtonClasses } from '../theme/colors';
 import { TypeAnimation } from 'react-type-animation';
 
 const Home: React.FC = () => {
@@ -32,10 +32,7 @@ const Home: React.FC = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/20 to-purple-900/20 dark:from-blue-900/40 dark:to-purple-900/40 z-0" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-10 dark:opacity-20 z-0" />
-        
+      <section className="relative h-screen flex items-center overflow-hidden">
         <div className="container mx-auto px-4 md:px-6 z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -105,15 +102,15 @@ const Home: React.FC = () => {
             </div>
           </motion.div>
         </div>
- 
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 1 }}
           className="absolute bottom-10 left-1/2 transform -translate-x-1/2"
         >
-          <motion.div 
-            animate={{ y: [0, 10, 0] }} 
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
             className="text-gray-600 dark:text-gray-400"
           >
@@ -123,7 +120,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Expertise Areas */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+      <section className="py-20">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -147,84 +144,84 @@ const Home: React.FC = () => {
           >
             <motion.div
               variants={itemVariants}
-              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
+              className="glass-effect p-8 rounded-xl border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
             >
               <div className="text-blue-600 dark:text-blue-400 mb-4">
                 <Cpu size={40} />
               </div>
               <h3 className="text-xl font-bold mb-2">Embedded Systems</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Designing and implementing firmware for microcontrollers and embedded processors, 
+                Designing and implementing firmware for microcontrollers and embedded processors,
                 creating efficient and reliable systems for various applications.
               </p>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
+              className="glass-effect p-8 rounded-xl border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
             >
               <div className="text-purple-600 dark:text-purple-400 mb-4">
                 <Wrench size={40} />
               </div>
               <h3 className="text-xl font-bold mb-2">Mechatronics</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Integrating mechanical, electronic, and control systems to create smart machines 
+                Integrating mechanical, electronic, and control systems to create smart machines
                 and automated systems with precise control and functionality.
               </p>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
+              className="glass-effect p-8 rounded-xl border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
             >
               <div className="text-green-600 dark:text-green-400 mb-4">
                 <Layers size={40} />
               </div>
               <h3 className="text-xl font-bold mb-2">Interactive Multimedia</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Creating engaging interactive experiences by combining hardware interfaces 
+                Creating engaging interactive experiences by combining hardware interfaces
                 with digital content for exhibitions, art installations, and educational tools.
               </p>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
+              className="glass-effect p-8 rounded-xl border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
             >
               <div className="text-red-600 dark:text-red-400 mb-4">
                 <Circuit size={40} />
               </div>
               <h3 className="text-xl font-bold mb-2">PCB Design</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Designing custom printed circuit boards from concept to production, 
+                Designing custom printed circuit boards from concept to production,
                 optimizing for performance, size, and manufacturability.
               </p>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
+              className="glass-effect p-8 rounded-xl border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
             >
               <div className="text-amber-600 dark:text-amber-400 mb-4">
                 <Zap size={40} />
               </div>
               <h3 className="text-xl font-bold mb-2">Automation</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Developing automated systems for industrial and consumer applications, 
+                Developing automated systems for industrial and consumer applications,
                 improving efficiency and reducing human intervention.
               </p>
             </motion.div>
 
             <motion.div
               variants={itemVariants}
-              className={`${getCardClasses()} p-8 hover:shadow-xl transition-shadow`}
+              className="glass-effect p-8 rounded-xl border border-white/20 dark:border-gray-700/50 hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
             >
               <div className="text-teal-600 dark:text-teal-400 mb-4">
                 <Code size={40} />
               </div>
               <h3 className="text-xl font-bold mb-2">IoT Solutions</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Creating connected devices and systems that communicate over networks, 
+                Creating connected devices and systems that communicate over networks,
                 enabling smart homes, industrial monitoring, and data-driven applications.
               </p>
             </motion.div>

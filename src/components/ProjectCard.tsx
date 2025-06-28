@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 import { Project } from '../types';
-import { getCategoryColorClasses, getCardClasses } from '../theme/colors';
+import { Badge, Card } from './ui/OnceUI';
 
 interface ProjectCardProps {
   project: Project;
@@ -11,60 +11,139 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
+  const categoryVariants = {
+    embedded: 'primary',
+    mechatronics: 'success',
+    interactive: 'warning',
+    automation: 'danger',
+    iot: 'default'
+  } as const;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      whileHover={{ y: -5 }}
-      className={`${getCardClasses()} hover:shadow-xl transition-all`}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{
+        duration: 0.6,
+        delay: index * 0.1,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+      whileHover={{
+        y: -8,
+        transition: { duration: 0.3, ease: 'easeOut' }
+      }}
+      className="group h-full"
     >
-      <div className="h-48 overflow-hidden">
-        <img 
-          src={project.image} 
-          alt={project.title} 
-          className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110"
-        />
-      </div>
-      
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColorClasses(project.category)}`}>
-            {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{project.date}</span>
-        </div>
-        
-        <h3 className="text-xl font-bold mb-2">{project.title}</h3>
-        
-        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-          {project.description}
-        </p>
-        
-        <div className="flex flex-wrap gap-2 mb-4">
-          {project.technologies.slice(0, 3).map((tech, i) => (
-            <span 
-              key={i}
-              className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded"
+      <Card className="once-ui-card h-full overflow-hidden group-hover:shadow-2xl group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-all duration-500" padding="none" elevated>
+        <div className="relative h-48 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10" />
+          <motion.img
+            src={project.image}
+            alt={project.title}
+            className="w-full h-full object-cover object-center"
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          />
+          <div className="absolute top-4 left-4 z-20">
+            <Badge
+              variant={categoryVariants[project.category as keyof typeof categoryVariants] || 'default'}
+              size="md"
             >
-              {tech}
+              {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
+            </Badge>
+          </div>
+          <div className="absolute top-4 right-4 z-20">
+            <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+              {project.date}
             </span>
-          ))}
-          {project.technologies.length > 3 && (
-            <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded">
-              +{project.technologies.length - 3} more
-            </span>
-          )}
+          </div>
         </div>
-        
-        <Link 
-          to={`/projects/${project.id}`}
-          className="inline-flex items-center text-blue-600 dark:text-blue-400 font-medium hover:underline"
-        >
-          View Details <ArrowRight size={16} className="ml-1" />
-        </Link>
-      </div>
+
+        <div className="p-6 flex flex-col flex-1">
+          <motion.h3
+            className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {project.title}
+          </motion.h3>
+
+          <motion.p
+            className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 leading-relaxed flex-1"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            {project.description}
+          </motion.p>
+
+          <motion.div
+            className="flex flex-wrap gap-2 mb-6"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {project.technologies.slice(0, 3).map((tech, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+                className="inline-block px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                {tech}
+              </motion.span>
+            ))}
+            {project.technologies.length > 3 && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9 }}
+                className="inline-block px-3 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full"
+              >
+                +{project.technologies.length - 3} more
+              </motion.span>
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="flex items-center justify-between"
+          >
+            <Link
+              to={`/projects/${project.id}`}
+              className="inline-flex items-center text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-300 group/link"
+            >
+              View Details
+              <motion.div
+                className="ml-1"
+                whileHover={{ x: 4 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ArrowRight size={16} />
+              </motion.div>
+            </Link>
+
+            {project.githubUrl && (
+              <motion.a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                title="View on GitHub"
+              >
+                <ExternalLink size={16} />
+              </motion.a>
+            )}
+          </motion.div>
+        </div>
+      </Card>
     </motion.div>
   );
 };

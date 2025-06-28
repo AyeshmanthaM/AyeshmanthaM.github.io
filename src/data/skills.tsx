@@ -46,6 +46,11 @@ export const skills = [
         level: 90
       },
       {
+        name: 'Java',
+        icon: <Code size={32} className="text-purple-600 dark:text-purple-400" />,
+        level: 90
+      },
+      {
         name: 'JavaScript/TypeScript',
         icon: <Code size={32} className="text-purple-600 dark:text-purple-400" />,
         level: 85
@@ -54,11 +59,6 @@ export const skills = [
         name: 'Assembly',
         icon: <Code size={32} className="text-purple-600 dark:text-purple-400" />,
         level: 80
-      },
-      {
-        name: 'VHDL/Verilog',
-        icon: <Code size={32} className="text-purple-600 dark:text-purple-400" />,
-        level: 75
       }
     ]
   },
@@ -101,7 +101,7 @@ export const skills = [
         level: 90
       },
       {
-        name: 'RTOS',
+        name: 'TouchDesigner (TD)',
         icon: <Server size={32} className="text-amber-600 dark:text-amber-400" />,
         level: 85
       },
