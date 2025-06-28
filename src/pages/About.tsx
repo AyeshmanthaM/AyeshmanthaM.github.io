@@ -16,7 +16,7 @@ const About: React.FC = () => {
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-4">About Me</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-            Mechatronics Engineer, Embedded Systems Specialist, and Interactive Designer
+              Mechatronics Engineer, Embedded Systems Specialist, and Interactive Designer
             </p>
           </motion.div>
 
@@ -27,13 +27,31 @@ const About: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="col-span-1"
             >
+              {/* Profile Photo & CV download button */}
               <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg">
-                <img
-                  src="https://media-hosting.imagekit.io//fc9ceaf4f4e34717/ayesh.png?Expires=1836067718&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=cBxqaXdHmYlwN1OiqvR0keIWXWFdRAAvzixqExeVulQEFfBcgUz7qquX2pT6xct82KG1TBRS8k03K1pZ5zrvILegUhE0bXgI9XGggw5Ee4wm5Dgn6P0iSy7QaHpi2Fldgrt3qBlqaTWMGy0lXxU4d1gFAmi474mCf8sq1NRYvv-2eLOOc3nK91iAsgl2uMN7blU2QySYBWr1iiLulqsBA9YUERox8wNHO4iZK4zqtUEfn9tetnVX9HJBYeUELwTMo7Hz3Ssvlbkbzz~irFsVqoSmdEkGmsmjikGZks88nyCKAMX5w46ynfQICTfT-8vClXFyGh1iCi2XE7wUCrP7Gw__"
-                  alt="Profile"
-                  className="w-full h-auto"
-                />
-                <div className="p-5">
+                <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-700">
+                  <img
+                    src="/ayeshmantham.github.io/images/ayesh1.png"
+                    alt="Ayeshmantha - Profile Photo"
+                    className="w-full h-full object-cover transition-opacity duration-300"
+                    loading="eager"
+                    onError={(e) => {
+                      console.error('Profile image failed to load');
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      // Show fallback
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  <div
+                    className="hidden w-full h-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white text-6xl font-bold"
+                    style={{ display: 'none' }}
+                  >
+                    A
+                  </div>
+                </div>
+                <div className="p-5 text-center">
                   <h2 className="text-3xl font-bold mb-1">Ayeshmantha</h2>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">
                     Mechatronics Engineer
@@ -52,6 +70,8 @@ const About: React.FC = () => {
               </div>
             </motion.div>
 
+
+            {/* My Story */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -60,7 +80,7 @@ const About: React.FC = () => {
             >
               <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
                 <h2 className="text-2xl font-bold mb-4">My Story</h2>
-                <div className="space-y-4 text-gray-700 dark:text-gray-300">
+                <div className="space-y-5 mb-7 text-gray-700 dark:text-gray-300">
                   <p>
                     I'm a passionate Embedded Systems and Mechatronics Engineer with over 8 years of experience designing and implementing innovative solutions at the intersection of hardware and software.
                   </p>
@@ -94,7 +114,7 @@ const About: React.FC = () => {
                   Focus on embedded systems and digital electronics. Senior project: "power-Line Communication for Smart Household Appliances."
                 </p>
               </div>
-         
+
             </div>
           </motion.div>
 
@@ -124,7 +144,7 @@ const About: React.FC = () => {
                   <li>Developed and maintained embedded systems for interactive installations.</li>
                 </ul>
               </div>
-              
+
             </div>
           </motion.div>
 
