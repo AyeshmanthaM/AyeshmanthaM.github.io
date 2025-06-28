@@ -8,6 +8,9 @@ import { Project } from '../types';
 import { RefreshCw, Database, AlertCircle } from 'lucide-react';
 
 const Projects: React.FC = () => {
+  //----------- Switch to control data source: true for Notion, false for fallback data ------------------------
+  const [useNotionService, setUseNotionService] = useState<boolean>(false);
+
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [projects, setProjects] = useState<Project[]>(fallbackProjects);
@@ -34,15 +37,21 @@ const Projects: React.FC = () => {
     setError(null);
 
     try {
-      // Check connection first
-      const connected = await checkConnection();
+      if (useNotionService) {
+        // Check connection first
+        const connected = await checkConnection();
 
-      if (connected) {
-        const notionProjects = await fetchProjectsFromNotion();
-        setProjects(notionProjects);
+        if (connected) {
+          const notionProjects = await fetchProjectsFromNotion();
+          setProjects(notionProjects);
+        } else {
+          console.info('Notion connection failed, using fallback projects data');
+          setProjects(fallbackProjects);
+        }
       } else {
-        console.info('Using fallback projects data');
+        console.info('Using fallback projects data (Notion service disabled)');
         setProjects(fallbackProjects);
+        setIsNotionConnected(false);
       }
     } catch (err) {
       console.error('Failed to load projects:', err);
@@ -51,12 +60,17 @@ const Projects: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [useNotionService]);
 
   // Load projects on component mount
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  // Reload projects when useNotionService changes
+  useEffect(() => {
+    loadProjects();
+  }, [useNotionService, loadProjects]);
 
   // Manual refresh function
   const refreshProjects = async () => {
@@ -108,20 +122,33 @@ const Projects: React.FC = () => {
             that showcase innovation in engineering and technology.
           </motion.p>
 
-          {/* Notion Connection Status */}
+          {/* Notion Connection Status and Controls */}
           <motion.div
-            className="mt-6 flex items-center justify-center gap-2"
+            className="mt-6 flex items-center justify-center gap-4 flex-wrap"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isNotionConnected
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isNotionConnected && useNotionService
               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
               : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
               }`}>
               <Database size={14} />
-              {isNotionConnected ? 'Connected to Notion' : 'Using fallback data'}
+              {useNotionService
+                ? (isNotionConnected ? 'Connected to Notion' : 'Notion unavailable - using fallback')
+                : 'Using local data'
+              }
             </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setUseNotionService(!useNotionService)}
+              className="text-xs"
+            >
+              {useNotionService ? 'Switch to Local Data' : 'Switch to Notion'}
+            </Button>
+
             <Button
               variant="ghost"
               size="sm"
