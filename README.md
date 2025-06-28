@@ -4,7 +4,7 @@ A modern, responsive CV/Portfolio website built with React, TypeScript, and Vite
 
 ## 🚀 Live Demo
 
-Visit the live website: [https://ayeshmantha.me](https://ayeshmantha.me)
+Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.net)
 
 ## 📋 Table of Contents
 
@@ -12,6 +12,7 @@ Visit the live website: [https://ayeshmantha.me](https://ayeshmantha.me)
 - [Tech Stack](#tech-stack)
 - [Prerequisites](#prerequisites)
 - [Installation & Setup](#installation--setup)
+- [Notion Integration](#notion-integration)
 - [Development](#development)
 - [Building for Production](#building-for-production)
 - [GitHub Pages Deployment](#github-pages-deployment)
@@ -26,6 +27,7 @@ Visit the live website: [https://ayeshmantha.me](https://ayeshmantha.me)
 - **Smooth Animations**: Powered by Framer Motion for engaging user experience
 - **Type Animations**: Dynamic typing effects using React Type Animation
 - **3D Elements**: Three.js integration for interactive visual elements
+- **Notion Integration**: Connect to Notion database for dynamic project management
 - **Fast Loading**: Optimized with Vite for lightning-fast development and build times
 - **SEO Optimized**: Proper meta tags and semantic HTML structure
 - **Modern UI**: Clean and professional design with Tailwind CSS
@@ -73,9 +75,19 @@ npm install
 
 This will install all the required dependencies listed in `package.json`.
 
-### 3. Environment Setup (Optional)
+### 3. Environment Setup
 
-If you need to configure any environment variables, create a `.env` file in the root directory:
+Create a `.env` file in the root directory for configuration:
+
+```bash
+# Notion API Configuration (Optional)
+VITE_NOTION_TOKEN=your_notion_integration_token_here
+VITE_NOTION_DATABASE_ID=your_notion_database_id_here
+```
+
+**For Notion Integration Setup**: See the detailed [Notion Setup Guide](./NOTION_SETUP.md) for step-by-step instructions on connecting your portfolio to a Notion database.
+
+### 4. Start Development Server
 
 ```bash
 # Example environment variables
@@ -319,3 +331,30 @@ This project is open source and available under the [MIT License](LICENSE).
 **Made with ❤️ by [Your Name]**
 
 > This portfolio showcases my journey in embedded systems development and web technologies.
+
+## 🔗 Notion Integration
+
+This portfolio supports dynamic project management through Notion integration. You can connect your portfolio to a Notion database to manage projects without code changes.
+
+### Quick Setup
+
+1. **Create a Notion Integration** at [notion.so/my-integrations](https://www.notion.so/my-integrations)
+2. **Set up a projects database** with required properties
+3. **Share the database** with your integration
+4. **Configure environment variables** in your `.env` file:
+   ```bash
+   VITE_NOTION_TOKEN=your_integration_token
+   VITE_NOTION_DATABASE_ID=your_database_id
+   ```
+
+### Features
+
+- ✅ **Real-time sync** with your Notion database
+- ✅ **Automatic fallback** to static data if Notion is unavailable
+- ✅ **Status indicator** showing connection state
+- ✅ **Manual refresh** button for immediate updates
+- ✅ **Rich content** support from Notion's editor
+
+### Detailed Setup
+
+For complete setup instructions, see the [Notion Setup Guide](./NOTION_SETUP.md).

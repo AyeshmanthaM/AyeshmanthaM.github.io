@@ -31,7 +31,7 @@ const About: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg">
                 <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-gray-700">
                   <img
-                    src="/ayeshmantham.github.io/images/ayesh1.png"
+                    src="/images/ayesh1.png"
                     alt="Ayeshmantha - Profile Photo"
                     className="w-full h-full object-cover transition-opacity duration-300"
                     loading="eager"

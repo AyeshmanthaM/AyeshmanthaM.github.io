@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
-import { Mail, ArrowRight } from 'lucide-react';
 
 const Maintenance: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -183,20 +181,26 @@ const Maintenance: React.FC = () => {
       if (frameIdRef.current !== null) {
         cancelAnimationFrame(frameIdRef.current);
       }
-      if (rendererRef.current && mountRef.current) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
+
+      // Copy refs to local variables to avoid stale closure warnings
+      const mount = mountRef.current;
+      const renderer = rendererRef.current;
+      const components = componentsRef.current;
+
+      if (renderer && mount) {
+        mount.removeChild(renderer.domElement);
       }
-      
+
       // Dispose of geometries and materials
-      componentsRef.current.forEach(component => {
+      components.forEach(component => {
         component.geometry.dispose();
         (component.material as THREE.Material).dispose();
       });
-      
+
       if (circuitBoardRef.current) {
         circuitBoardRef.current.clear();
       }
-      
+
       if (sceneRef.current) {
         sceneRef.current.clear();
       }
@@ -216,7 +220,7 @@ const Maintenance: React.FC = () => {
           transition={{ duration: 0.8 }}
           className="text-center max-w-2xl backdrop-blur-sm bg-black/30 p-8 rounded-xl"
         >
-          <motion.h1 
+          <motion.h1
             className="text-4xl md:text-5xl font-bold mb-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -224,24 +228,24 @@ const Maintenance: React.FC = () => {
           >
             <span className="text-blue-400">System</span> Maintenance
           </motion.h1>
-          
+
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: "100%" }}
             transition={{ delay: 0.5, duration: 1 }}
             className="h-0.5 bg-blue-500 mx-auto mb-6"
           />
-          
-          <motion.p 
+
+          <motion.p
             className="text-lg md:text-xl mb-8 text-gray-200"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.8 }}
           >
-            I'm currently upgrading my system to bring you an enhanced experience. 
+            I'm currently upgrading my system to bring you an enhanced experience.
             I'm working diligently to complete the maintenance as quickly as possible. Stay tuned!
           </motion.p>
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -255,10 +259,10 @@ const Maintenance: React.FC = () => {
               <Mail size={18} className="mr-2" />
               Contact Us
             </Link> */}
-             
+
           </motion.div>
         </motion.div>
-        
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

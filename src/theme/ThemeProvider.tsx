@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { lightTheme, darkTheme } from './once-ui-config';
 
 interface ThemeContextType {
@@ -7,31 +7,23 @@ interface ThemeContextType {
     themeConfig: typeof lightTheme;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useTheme = () => {
-    const context = useContext(ThemeContext);
-    if (!context) {
-        throw new Error('useTheme must be used within a ThemeProvider');
-    }
-    return context;
-};
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
     children: React.ReactNode;
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
     useEffect(() => {
-        // Check for saved theme preference or default to system preference
+        // Check for saved theme preference or default to dark mode
         const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
         if (savedTheme) {
             setTheme(savedTheme);
         } else {
-            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            setTheme(systemPrefersDark ? 'dark' : 'light');
+            // Default to dark mode instead of system preference
+            setTheme('dark');
         }
     }, []);
 

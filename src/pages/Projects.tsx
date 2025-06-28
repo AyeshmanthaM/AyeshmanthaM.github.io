@@ -1,12 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectCard from '../components/ProjectCard';
-import { projects } from '../data/projects';
 import { Button, Input } from '../components/ui/OnceUI';
+import { fetchProjectsFromNotion, checkNotionConnection } from '../services/notionService';
+import { projects as fallbackProjects } from '../data/projects';
+import { Project } from '../types';
+import { RefreshCw, Database, AlertCircle } from 'lucide-react';
 
 const Projects: React.FC = () => {
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [projects, setProjects] = useState<Project[]>(fallbackProjects);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isNotionConnected, setIsNotionConnected] = useState(false);
+
+  // Direct function to check Notion connection
+  const checkConnection = async () => {
+    try {
+      const connected = await checkNotionConnection();
+      setIsNotionConnected(connected);
+      return connected;
+    } catch (err) {
+      console.error('Connection check failed:', err);
+      setIsNotionConnected(false);
+      return false;
+    }
+  };
+
+  // Direct function to fetch projects
+  const loadProjects = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Check connection first
+      const connected = await checkConnection();
+
+      if (connected) {
+        const notionProjects = await fetchProjectsFromNotion();
+        setProjects(notionProjects);
+      } else {
+        console.info('Using fallback projects data');
+        setProjects(fallbackProjects);
+      }
+    } catch (err) {
+      console.error('Failed to load projects:', err);
+      setError('Failed to load projects. Using fallback data.');
+      setProjects(fallbackProjects);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load projects on component mount
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  // Manual refresh function
+  const refreshProjects = async () => {
+    await loadProjects();
+  };
 
   const categories = [
     { id: 'all', name: 'All Projects' },
@@ -15,6 +70,7 @@ const Projects: React.FC = () => {
     { id: 'interactive', name: 'Interactive' },
     { id: 'automation', name: 'Automation' },
     { id: 'iot', name: 'IoT' },
+    { id: 'other', name: 'Other' },
   ];
 
   const filteredProjects = projects.filter((project) => {
@@ -51,6 +107,47 @@ const Projects: React.FC = () => {
             Explore my portfolio of embedded systems, mechatronics, and interactive multimedia projects
             that showcase innovation in engineering and technology.
           </motion.p>
+
+          {/* Notion Connection Status */}
+          <motion.div
+            className="mt-6 flex items-center justify-center gap-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isNotionConnected
+              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+              }`}>
+              <Database size={14} />
+              {isNotionConnected ? 'Connected to Notion' : 'Using fallback data'}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshProjects}
+              disabled={loading}
+              className="p-1"
+            >
+              <RefreshCw
+                size={14}
+                className={loading ? 'animate-spin' : ''}
+              />
+            </Button>
+          </motion.div>
+
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg max-w-md mx-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <AlertCircle size={16} />
+              <span className="text-sm">{error}</span>
+            </motion.div>
+          )}
         </motion.div>
 
         <motion.div
@@ -97,7 +194,26 @@ const Projects: React.FC = () => {
         </motion.div>
 
         <AnimatePresence mode="wait">
-          {filteredProjects.length > 0 ? (
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {[...Array(6)].map((_, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="once-ui-card h-80 animate-pulse bg-gray-200 dark:bg-gray-800"
+                />
+              ))}
+            </motion.div>
+          ) : filteredProjects.length > 0 ? (
             <motion.div
               key="projects"
               initial={{ opacity: 0 }}

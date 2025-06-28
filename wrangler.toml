@@ -1,0 +1,7 @@
+name = "notion-cors-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables will be set as secrets:
+# wrangler secret put NOTION_TOKEN
+# wrangler secret put NOTION_DATABASE_ID

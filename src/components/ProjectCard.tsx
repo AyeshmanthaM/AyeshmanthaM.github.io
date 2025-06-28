@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Project } from '../types';
 import { Badge, Card } from './ui/OnceUI';
 
@@ -127,20 +127,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
                 <ArrowRight size={16} />
               </motion.div>
             </Link>
-
-            {project.githubUrl && (
-              <motion.a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                title="View on GitHub"
-              >
-                <ExternalLink size={16} />
-              </motion.a>
-            )}
           </motion.div>
         </div>
       </Card>

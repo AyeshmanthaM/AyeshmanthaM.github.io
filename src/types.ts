@@ -1,3 +1,5 @@
+export type ProjectCategory = 'embedded' | 'mechatronics' | 'interactive' | 'automation' | 'iot' | 'Web' |'other';
+
 export interface Project {
   id: string;
   title: string;
@@ -6,9 +8,7 @@ export interface Project {
   challenges: string;
   results: string;
   image: string;
-  category: 'embedded' | 'mechatronics' | 'interactive' | 'automation' | 'iot';
+  category: ProjectCategory;
   technologies: string[];
   date: string;
-  githubUrl: string | null;
-  liveUrl: string | null;
 }
