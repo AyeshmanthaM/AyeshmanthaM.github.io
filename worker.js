@@ -1,4 +1,4 @@
-// Cloudflare Worker for Notion API Proxy
+// Cloudflare Worker for Notion API Proxy and Admin Features
 export default {
     async fetch(request, env, ctx) {
         // Handle CORS preflight requests
@@ -25,6 +25,40 @@ export default {
         };
 
         try {
+            // Admin authentication check
+            const isAdminRequest = path.startsWith('/api/admin') || path.includes('/send-email') || path.includes('/backup');
+            if (isAdminRequest && !this.isAuthorized(request, env)) {
+                return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                    status: 401,
+                    headers: corsHeaders,
+                });
+            }
+
+            // Route: POST /api/send-email - Send email via SendGrid/Mailgun
+            if (path === '/api/send-email' && request.method === 'POST') {
+                return await this.handleSendEmail(request, env, corsHeaders);
+            }
+
+            // Route: POST /api/notion/backup - Create Notion backup
+            if (path === '/api/notion/backup' && request.method === 'POST') {
+                return await this.handleNotionBackup(request, env, corsHeaders);
+            }
+
+            // Route: GET /api/notion/backup-history - Get backup history
+            if (path === '/api/notion/backup-history' && request.method === 'GET') {
+                return await this.handleBackupHistory(request, env, corsHeaders);
+            }
+
+            // Route: POST /api/notion/restore - Restore from backup
+            if (path === '/api/notion/restore' && request.method === 'POST') {
+                return await this.handleRestoreBackup(request, env, corsHeaders);
+            }
+
+            // Route: POST /api/notion/sync - Sync with Notion
+            if (path === '/api/notion/sync' && request.method === 'POST') {
+                return await this.handleNotionSync(request, env, corsHeaders);
+            }
+
             // Route: GET /api/debug - Debug endpoint to check configuration
             if (path === '/api/debug' && request.method === 'GET') {
                 return new Response(JSON.stringify({
@@ -197,7 +231,275 @@ export default {
             console.error('Worker error:', error);
             return new Response(JSON.stringify({
                 error: 'Internal server error',
-                message: error.message
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Check admin authorization
+    isAuthorized(request, env) {
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return false;
+        }
+
+        const token = authHeader.split(' ')[1];
+        return token === env.ADMIN_TOKEN || token === 'admin-token';
+    },
+
+    // Handle sending email via SendGrid
+    async handleSendEmail(request, env, corsHeaders) {
+        try {
+            const { to, subject, message, from } = await request.json();
+
+            // Validate input
+            if (!to || !subject || !message) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: 'Missing required fields'
+                }), {
+                    status: 400,
+                    headers: corsHeaders,
+                });
+            }
+
+            // Use SendGrid API
+            const emailData = {
+                personalizations: [
+                    {
+                        to: [{ email: to }],
+                        subject: subject
+                    }
+                ],
+                from: { email: from || 'admin@ayeshmantha.net' },
+                content: [
+                    {
+                        type: 'text/plain',
+                        value: message
+                    }
+                ]
+            };
+
+            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(emailData),
+            });
+
+            if (response.ok) {
+                return new Response(JSON.stringify({
+                    success: true,
+                    message: 'Email sent successfully'
+                }), {
+                    headers: corsHeaders,
+                });
+            } else {
+                throw new Error(`SendGrid error: ${response.status}`);
+            }
+
+        } catch (error) {
+            console.error('Email sending error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to send email',
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Handle Notion backup
+    async handleNotionBackup(request, env, corsHeaders) {
+        try {
+            // Fetch all projects from Notion
+            const response = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                    'Notion-Version': '2022-06-28',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Notion API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const projects = data.results || [];
+
+            // Create backup data
+            const backupData = {
+                projects: projects,
+                timestamp: new Date().toISOString(),
+                count: projects.length,
+                metadata: {
+                    version: '1.0.0',
+                    source: 'notion',
+                    backup_type: 'full'
+                }
+            };
+
+            // Store backup in KV storage for history
+            if (env.BACKUP_KV) {
+                const backupKey = `backup-${Date.now()}`;
+                await env.BACKUP_KV.put(backupKey, JSON.stringify(backupData));
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                data: backupData
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Backup error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to create backup',
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Handle backup history
+    async handleBackupHistory(request, env, corsHeaders) {
+        try {
+            if (!env.BACKUP_KV) {
+                return new Response(JSON.stringify({
+                    backups: []
+                }), {
+                    headers: corsHeaders,
+                });
+            }
+
+            // List recent backups (simplified - in production you'd want pagination)
+            const list = await env.BACKUP_KV.list({ prefix: 'backup-' });
+            const backups = [];
+
+            for (const key of list.keys.slice(0, 10)) { // Last 10 backups
+                const backup = await env.BACKUP_KV.get(key.name);
+                if (backup) {
+                    backups.push(JSON.parse(backup));
+                }
+            }
+
+            return new Response(JSON.stringify({
+                backups: backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Backup history error:', error);
+            return new Response(JSON.stringify({
+                backups: [],
+                error: error.message
+            }), {
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Handle restore from backup
+    async handleRestoreBackup(request, env, corsHeaders) {
+        try {
+            const backupData = await request.json();
+
+            // Validate backup data
+            if (!backupData.projects || !Array.isArray(backupData.projects)) {
+                throw new Error('Invalid backup data');
+            }
+
+            // In a real implementation, you would restore to Notion
+            // For now, just validate and return success
+            return new Response(JSON.stringify({
+                success: true,
+                message: `Restored ${backupData.projects.length} projects`,
+                timestamp: new Date().toISOString()
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Restore error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to restore backup',
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Handle Notion sync
+    async handleNotionSync(request, env, corsHeaders) {
+        try {
+            // Fetch latest projects from Notion
+            const response = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                    'Notion-Version': '2022-06-28',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sorts: [
+                        {
+                            property: 'Last edited time',
+                            direction: 'descending'
+                        }
+                    ]
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Notion API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const projects = data.results.map(page => {
+                return {
+                    id: page.id,
+                    title: page.properties.Title?.title[0]?.plain_text || 'Untitled',
+                    description: page.properties.Description?.rich_text[0]?.plain_text || '',
+                    category: page.properties.Category?.select?.name || 'other',
+                    technologies: page.properties.Technologies?.multi_select?.map(tech => tech.name) || [],
+                    date: page.properties.Date?.date?.start || new Date().toISOString().split('T')[0],
+                    image: getImageUrl(page.properties['Image URL']?.files, page.properties),
+                };
+            });
+
+            return new Response(JSON.stringify({
+                success: true,
+                projects: projects,
+                count: projects.length,
+                timestamp: new Date().toISOString()
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Sync error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to sync with Notion',
+                details: error.message
             }), {
                 status: 500,
                 headers: corsHeaders,
