@@ -1,0 +1,31 @@
+{
+  "id": "project-220e0b952ee7802fa033e6a18d2bc723",
+  "title": "teset",
+  "description": "no",
+  "fullDescription": "",
+  "category": "web",
+  "technologies": [
+    "Node"
+  ],
+  "date": "2025-06-02",
+  "status": "Published",
+  "images": {
+    "primary": "https://prod-files-secure.s3.us-west-2.amazonaws.com/142e0c2a-1b65-433e-927e-70364d42a7e0/cee1812a-4cb2-4ca0-befd-e8baff9a5f55/frontLayerout.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466Y4W77HHB%2F20250702%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250702T204013Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIBIRhVUiX5iOaM7%2BFUrep0R0LZRFKI6E5h7WvhpxZe4pAiEAsUSsSnQDrq%2B0XfMtXtpO2sG99BC00IGZ5DJpU9FA%2FNkqiAQI9f%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAAGgw2Mzc0MjMxODM4MDUiDAQrzDXsGwTBRtflYircA4tV3mpcASA9HDTS8W0FHfSUQJWp91kHD4PTviv%2BE%2Fc2Coiy3gzDYJ1T3NnlB%2FxgXSfPaTf9LI8wjaAJUkx6uuHMCPQOxRL0Ghd9d9v2tvuAJWP4rgjmXsfRdKhipTtRu2DFd%2BOuY2hTYsTWpqF1xIitfe9c2CHdp3Ae%2FSQ04WpBzvy9be%2F8lLoNVgJw42ckT0AyUcWlCasvfpGsEOcTfku4M92RjsU4l9b7RVSp6qPFMzSOMCovT1EA%2Bahm8FvcwSFQOffHdFHM5PDoIwLYc4rBmOGaFHqgPIBaUyLvnF53MVYk7j5ieBS66pZr8vL4j%2BysaYJ%2BvTC2gzasFDCmEghu1bwMymRIz6HQbYJPH0BQpMYr5l7T38kwJj3mt86JjeLnTYuwyg7VrrFZZLFunRg2E9Anyrx3KreM4elHVhffcnQWSFKLwyvrhRYJgHSljZRAzitu4mNkS4jq%2FxBExv3VD8mHc1zJNQq5Z00gEB2Y8ev2VpTG5CdXnNVMQhiTO0oONUFEFg26DgYjMDX7kNy60EJbD45ae8Fx3vv9uiPJQr7RZ1FLt9dXQcVr2FPgQDsDl5hPDvfTLG3L%2FEC7HqLEUqHwYzK6KoQQ67V6RzRM50cqEEM64EmBt%2F7XMNmhlsMGOqUByz4J9%2B5M2lEM9C2W6QOR4%2FLJuSNv9oeVJRQVg3uuK1y010DraVDyWxdIIIhZ6ZTQ%2B8%2FBYo67rrihZpayN%2Bo%2F2ZyiCQtRmEE0Dt%2BMAGtjAVkluQ02F8U3Rnj1s1%2BbXzijtJtVAWXffWOopfkKh21kg%2FYlKY6kqkOzu8Dnidt9bepkDyh%2BT%2BztfK7JW%2ForHSpxBHHNOA6rE5hNh1oE6pe3LOP5SyK8&X-Amz-Signature=81149e1abde591d367c9672e6150256df68f8ba0eaa9ef0502439fe67bcda666&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "gallery": [],
+    "local": {
+      "primary": "/images/projects/220e0b952ee7802fa033e6a18d2bc723/primary.jpg",
+      "gallery": []
+    }
+  },
+  "links": {
+    "github": "",
+    "demo": "",
+    "documentation": ""
+  },
+  "metadata": {
+    "notionId": "220e0b95-2ee7-802f-a033-e6a18d2bc723",
+    "lastUpdated": "2025-06-28T22:00:00.000Z",
+    "syncedAt": "2025-07-02T20:40:13.983Z",
+    "version": 1
+  }
+}
