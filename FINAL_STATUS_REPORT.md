@@ -43,8 +43,8 @@
 - ⏳ **PENDING**: Set GitHub Personal Access Token
 
 ### 6. Testing and Documentation
-- ✅ Created `test-notion-sync.html` - Web-based testing interface
-- ✅ Created `test-notion-sync.js` - CLI testing script
+- ✅ Created `notion-sync.html` - Web-based testing interface
+- ✅ Created `notion-sync.js` - CLI testing script
 - ✅ Created `NOTION_SYNC_CHECKLIST.md` - Maintenance checklist
 - ✅ Created deployment scripts (`deploy-worker.sh`, `deploy-worker.ps1`)
 
@@ -110,13 +110,13 @@ Check if files are created/updated in:
 ## 🔍 TESTING RESOURCES
 
 ### Web Interface
-- **File**: `test-notion-sync.html`
+- **File**: `notion-sync.html`
 - **Access**: Open in browser for visual testing
 - **Features**: Connectivity test, sync status, full sync, debug info
 
 ### CLI Testing
-- **File**: `test-notion-sync.js`
-- **Usage**: `node test-notion-sync.js`
+- **File**: `notion-sync.js`
+- **Usage**: `node notion-sync.js`
 - **Features**: Automated endpoint testing
 
 ### Deployment Scripts

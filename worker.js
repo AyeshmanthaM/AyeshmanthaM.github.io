@@ -494,18 +494,47 @@ export default {
     // Helper: Update GitHub public folder with projects
     async updateGitHubPublicFolder(projects, env, timestamp) {
         try {
-            const owner = 'AyeshmanthaM'; // Update with your GitHub username
-            const repo = 'AyeshmanthaM.github.io'; // Update with your repo name
-            const branch = 'gh-pages'; // Use main branch instead of data branch
+            const owner = 'AyeshmanthaM';
+            const repo = 'AyeshmanthaM.github.io';
+            const branch = 'main';
 
-            // Update metadata.json
+            console.log(`🔄 Starting GitHub update for ${projects.length} projects to ${owner}/${repo}:${branch}`);
+
+            // Step 1: Get existing project files in GitHub to identify orphaned files
+            const existingFiles = await this.getExistingProjectFiles(owner, repo, branch, env.GITHUB_TOKEN);
+            const currentProjectIds = projects.map(p => p.id);
+            const filesToDelete = existingFiles.filter(filename => {
+                const fileProjectId = filename.replace('.json', '');
+                return !currentProjectIds.includes(fileProjectId);
+            });
+
+            console.log(`� File analysis: ${existingFiles.length} existing, ${currentProjectIds.length} current, ${filesToDelete.length} to delete`);
+
+            // Step 2: Delete orphaned files
+            const deletePromises = filesToDelete.map(async (filename) => {
+                const filePath = `public/data/projects/${filename}`;
+                const result = await this.deleteGitHubFile(
+                    owner, repo, branch, filePath,
+                    `Remove deleted project: ${filename}`, env.GITHUB_TOKEN
+                );
+                return { path: filePath, success: result, action: 'deleted', project: filename };
+            });
+
+            // Step 3: Update metadata.json
             const metadataContent = {
                 version: '1.0.0',
                 location: 'public/data',
                 purpose: 'Portfolio project data stored in public folder',
                 lastSync: timestamp,
                 projectCount: projects.length,
-                syncHistory: [], // In production, you'd maintain this history
+                syncHistory: [
+                    {
+                        timestamp,
+                        projectCount: projects.length,
+                        deletedCount: filesToDelete.length,
+                        method: 'cloudflare-worker'
+                    }
+                ],
                 structure: {
                     projects: 'Individual project data files'
                 },
@@ -516,32 +545,69 @@ export default {
                     baseUrl: 'https://ayeshmantham.github.io/data/',
                     projects: 'projects/{project-id}.json',
                     metadata: 'metadata.json'
-                }
+                },
+                projects: projects.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    category: p.category,
+                    filename: `${p.id}.json`
+                }))
             };
 
-            // Create/update individual project files
+            // Step 4: Create/update individual project files
             const updatePromises = projects.map(async (project) => {
                 const filePath = `public/data/projects/${project.id}.json`;
                 const content = JSON.stringify(project, null, 2);
 
-                return this.updateGitHubFile(
+                const result = await this.updateGitHubFile(
                     owner, repo, branch, filePath, content,
                     `Update project data for ${project.title}`, env.GITHUB_TOKEN
                 );
+                return { path: filePath, success: result, action: 'updated', project: project.title };
             });
 
-            // Update metadata file
-            updatePromises.push(
-                this.updateGitHubFile(
-                    owner, repo, branch, 'public/data/metadata.json',
-                    JSON.stringify(metadataContent, null, 2),
-                    `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
-                )
+            // Step 5: Update metadata file
+            const metadataResult = this.updateGitHubFile(
+                owner, repo, branch, 'public/data/metadata.json',
+                JSON.stringify(metadataContent, null, 2),
+                `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
             );
+            updatePromises.push(metadataResult.then(result => ({
+                path: 'public/data/metadata.json',
+                success: result,
+                action: 'updated',
+                project: 'metadata'
+            })));
 
-            await Promise.all(updatePromises);
+            // Execute all operations
+            const allPromises = [...deletePromises, ...updatePromises];
+            const results = await Promise.all(allPromises);
 
-            return { success: true, updatedFiles: projects.length + 1 };
+            const successCount = results.filter(r => r.success).length;
+            const failedFiles = results.filter(r => !r.success);
+            const deletedCount = results.filter(r => r.action === 'deleted' && r.success).length;
+            const updatedCount = results.filter(r => r.action === 'updated' && r.success).length;
+
+            console.log(`📊 GitHub Update Summary: ${successCount}/${results.length} operations successful`);
+            console.log(`   - Updated: ${updatedCount} files`);
+            console.log(`   - Deleted: ${deletedCount} files`);
+
+            if (failedFiles.length > 0) {
+                console.error('❌ Failed operations:', failedFiles.map(f => `${f.action}: ${f.path}`));
+            }
+
+            if (deletedCount > 0) {
+                console.log(`🗑️ Cleaned up ${deletedCount} orphaned files`);
+            }
+
+            return {
+                success: successCount > 0,
+                updatedFiles: updatedCount,
+                deletedFiles: deletedCount,
+                totalOperations: results.length,
+                failedFiles: failedFiles.map(f => ({ action: f.action, path: f.path })),
+                details: results
+            };
 
         } catch (error) {
             console.error('GitHub update error:', error);
@@ -552,24 +618,41 @@ export default {
     // Helper: Update a specific file in GitHub
     async updateGitHubFile(owner, repo, branch, path, content, message, token) {
         try {
+            console.log(`📝 Updating GitHub file: ${path}`);
+
+            // Validate token format
+            if (!token || (!token.startsWith('ghp_') && !token.startsWith('github_pat_'))) {
+                console.error('❌ Invalid GitHub token format. Expected ghp_ or github_pat_ prefix');
+                return false;
+            }
+
             const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
             // Get current file SHA (if exists)
             let sha = null;
             try {
+                console.log(`🔍 Checking if file exists: ${path}`);
                 const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
                     headers: {
-                        'Authorization': `token ${token}`,
+                        'Authorization': `Bearer ${token}`,
                         'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Cloudflare-Worker-Notion-Sync'
                     },
                 });
 
                 if (getResponse.ok) {
                     const fileData = await getResponse.json();
                     sha = fileData.sha;
+                    console.log(`✅ File exists, SHA: ${sha.substring(0, 8)}...`);
+                } else if (getResponse.status === 404) {
+                    console.log(`ℹ️ File doesn't exist, will create new file`);
+                } else {
+                    console.error(`⚠️ Error checking file existence: ${getResponse.status} - ${getResponse.statusText}`);
+                    const errorText = await getResponse.text();
+                    console.error('Error details:', errorText);
                 }
             } catch (error) {
-                // File doesn't exist, which is fine for new files
+                console.log(`ℹ️ File doesn't exist or error checking: ${error.message}`);
             }
 
             // Update or create file
@@ -581,22 +664,45 @@ export default {
 
             if (sha) {
                 updateData.sha = sha;
+                console.log(`🔄 Updating existing file`);
+            } else {
+                console.log(`🆕 Creating new file`);
             }
 
+            console.log(`📤 Sending update request for ${path}`);
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `token ${token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json',
+                    'User-Agent': 'Cloudflare-Worker-Notion-Sync'
                 },
                 body: JSON.stringify(updateData),
             });
 
-            return response.ok;
+            if (response.ok) {
+                const result = await response.json();
+                console.log(`✅ Successfully updated ${path}, commit SHA: ${result.commit?.sha?.substring(0, 8)}...`);
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error(`❌ Failed to update ${path}: ${response.status} - ${response.statusText}`);
+                console.error('Error details:', errorText);
+
+                // Try to parse error for more details
+                try {
+                    const errorData = JSON.parse(errorText);
+                    console.error('Parsed error:', errorData);
+                } catch (e) {
+                    // Error text is not JSON
+                }
+
+                return false;
+            }
 
         } catch (error) {
-            console.error(`Error updating ${path}:`, error);
+            console.error(`❌ Exception updating ${path}:`, error);
             return false;
         }
     },
@@ -683,6 +789,110 @@ export default {
             };
         }
     },
+
+    // Helper: Get existing project files from GitHub
+    async getExistingProjectFiles(owner, repo, branch, token) {
+        try {
+            console.log(`🔍 Fetching existing project files from ${owner}/${repo}:${branch}`);
+
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/public/data/projects?ref=${branch}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                },
+            });
+
+            if (response.ok) {
+                const files = await response.json();
+                const jsonFiles = files
+                    .filter(file => file.type === 'file' && file.name.endsWith('.json'))
+                    .map(file => file.name);
+
+                console.log(`📁 Found ${jsonFiles.length} existing project files:`, jsonFiles);
+                return jsonFiles;
+            } else if (response.status === 404) {
+                console.log(`📁 public/data/projects directory doesn't exist yet`);
+                return [];
+            } else {
+                const errorText = await response.text();
+                console.error(`❌ Error fetching existing files: ${response.status} - ${response.statusText}`);
+                console.error('Error details:', errorText);
+                return [];
+            }
+        } catch (error) {
+            console.error('❌ Exception fetching existing files:', error);
+            return [];
+        }
+    },
+
+    // Helper: Delete a file from GitHub
+    async deleteGitHubFile(owner, repo, branch, path, message, token) {
+        try {
+            console.log(`🗑️ Deleting GitHub file: ${path}`);
+
+            // Validate token format
+            if (!token || (!token.startsWith('ghp_') && !token.startsWith('github_pat_'))) {
+                console.error('❌ Invalid GitHub token format for deletion');
+                return false;
+            }
+
+            // First, get the file's SHA
+            const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                },
+            });
+
+            if (!getResponse.ok) {
+                if (getResponse.status === 404) {
+                    console.log(`ℹ️ File ${path} doesn't exist, nothing to delete`);
+                    return true; // Consider this a success since the goal is achieved
+                }
+                const errorText = await getResponse.text();
+                console.error(`❌ Error getting file SHA: ${getResponse.status} - ${getResponse.statusText}`);
+                console.error('Error details:', errorText);
+                return false;
+            }
+
+            const fileData = await getResponse.json();
+            const sha = fileData.sha;
+            console.log(`📋 File SHA for deletion: ${sha.substring(0, 8)}...`);
+
+            // Delete the file
+            const deleteResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                },
+                body: JSON.stringify({
+                    message,
+                    sha,
+                    branch
+                }),
+            });
+
+            if (deleteResponse.ok) {
+                const result = await deleteResponse.json();
+                console.log(`✅ Successfully deleted ${path}, commit SHA: ${result.commit?.sha?.substring(0, 8)}...`);
+                return true;
+            } else {
+                const errorText = await deleteResponse.text();
+                console.error(`❌ Failed to delete ${path}: ${deleteResponse.status} - ${deleteResponse.statusText}`);
+                console.error('Error details:', errorText);
+                return false;
+            }
+
+        } catch (error) {
+            console.error(`❌ Exception deleting ${path}:`, error);
+            return false;
+        }
+    }
 };
 
 // Helper function to extract image URL from Files & media property  

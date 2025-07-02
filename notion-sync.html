@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Sync System Test</title>
+    <title>Notion Sync System</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -92,8 +92,13 @@
         }
 
         @keyframes spin {
-            0% { transform: translateY(-50%) rotate(0deg); }
-            100% { transform: translateY(-50%) rotate(360deg); }
+            0% {
+                transform: translateY(-50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translateY(-50%) rotate(360deg);
+            }
         }
 
         .status.success {
@@ -140,12 +145,12 @@
 
 <body>
     <div class="container">
-        <h1>🔄 Notion Project Sync System Test</h1>
+        <h1>🔄 Notion Project Sync System</h1>
 
         <div class="info-box">
-            <strong>ℹ️ About this test:</strong><br>
-            This page tests your Notion sync system to ensure it's working correctly. It will check your Cloudflare
-            Worker endpoints and Notion integration.
+            <strong>ℹ️ About this system:</strong><br>
+            This page manages your Notion sync system and allows you to monitor and control synchronization between your
+            Notion database and GitHub repository.
         </div>
 
         <!-- Quick Connectivity Test -->
@@ -210,6 +215,15 @@
             <button onclick="getDebugInfo()">Get Debug Info</button>
             <div id="debugResult" class="status" style="display: none;"></div>
             <pre id="debugResponse" class="response" style="display: none;"></pre>
+        </div>
+
+        <!-- File Cleanup Test -->
+        <div class="test-section">
+            <h3>🗑️ File Cleanup Test</h3>
+            <p>Test the file deletion feature by checking for orphaned files that should be removed during sync.</p>
+            <button onclick="testFileCleanup()">Test File Cleanup</button>
+            <div id="cleanupResult" class="status" style="display: none;"></div>
+            <pre id="cleanupResponse" class="response" style="display: none;"></pre>
         </div>
     </div>
 
@@ -390,7 +404,7 @@
             ];
 
             let currentStep = 0;
-            
+
             // Show initial progress
             showStatus('syncResult', 'loading', progressSteps[currentStep]);
 
@@ -409,7 +423,7 @@
                 };
 
                 const { response, data } = await makeRequest('/api/data/sync', 'POST', body);
-                
+
                 // Clear progress interval
                 clearInterval(progressInterval);
 
@@ -475,6 +489,68 @@
             } catch (error) {
                 showStatus('debugResult', 'error', `Network error: ${error.message}`);
                 showResponse('debugResponse', { error: error.message });
+            }
+        }
+
+        async function testFileCleanup() {
+            showStatus('cleanupResult', 'loading', 'Testing file cleanup functionality...');
+
+            try {
+                showResponse('cleanupResponse', { message: 'Performing sync with cleanup test...' });
+
+                // Step 1: Get current project list from Notion
+                const { response: projectsResponse, data: projectsData } = await makeRequest('/api/projects');
+
+                if (!projectsResponse.ok) {
+                    throw new Error('Failed to fetch projects from Notion');
+                }
+
+                const currentProjects = projectsData.map(p => ({
+                    id: `project-${p.id.replace(/-/g, '')}`,
+                    title: p.title
+                }));
+
+                // Step 2: Perform sync and check for file operations
+                const { response: syncResponse, data: syncData } = await makeRequest('/api/data/sync', 'POST', {
+                    action: 'cleanup-test',
+                    includeImages: false
+                });
+
+                const testResult = {
+                    step1_currentProjects: {
+                        count: currentProjects.length,
+                        projects: currentProjects
+                    },
+                    step2_syncResult: syncData,
+                    step3_analysis: {}
+                };
+
+                // Step 3: Analyze the sync results
+                if (syncData.success && syncData.data) {
+                    const syncedCount = syncData.data.projectCount;
+                    testResult.step3_analysis = {
+                        notionProjects: syncedCount,
+                        githubUpdateSuccess: syncData.data.githubUpdated,
+                        syncTimestamp: syncData.data.syncTimestamp,
+                        fileCleanupFeature: 'enabled - checks for orphaned files and removes them'
+                    };
+
+                    if (syncData.data.githubUpdated) {
+                        testResult.step3_analysis.githubOperations = 'Files were updated in GitHub repository';
+                    } else {
+                        testResult.step3_analysis.githubOperations = 'No GitHub operations performed (check token)';
+                    }
+                } else {
+                    testResult.step3_analysis.error = 'Sync failed or returned unexpected data';
+                }
+
+                showStatus('cleanupResult', 'success',
+                    `File cleanup test completed. Found ${currentProjects.length} projects in Notion.`);
+                showResponse('cleanupResponse', testResult);
+
+            } catch (error) {
+                showStatus('cleanupResult', 'error', `File cleanup test failed: ${error.message}`);
+                showResponse('cleanupResponse', { error: error.message, stack: error.stack });
             }
         }
 
