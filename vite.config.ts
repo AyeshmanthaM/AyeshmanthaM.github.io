@@ -8,6 +8,13 @@ export default defineConfig(({ command }) => ({
   server: {
     host: 'localhost',
     port: 5173,
+    proxy: {
+      '/api': {
+        target: 'https://notion-cors-proxy.maduranga-ayeshmantha.workers.dev',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
   },
   optimizeDeps: {
     exclude: ['lucide-react'],

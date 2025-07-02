@@ -235,9 +235,15 @@ export default {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    filter: {
+                        property: 'Status',
+                        select: {
+                            equals: 'Published'
+                        }
+                    },
                     sorts: [
                         {
-                            property: 'Last edited time',
+                            property: 'Date',
                             direction: 'descending'
                         }
                     ]

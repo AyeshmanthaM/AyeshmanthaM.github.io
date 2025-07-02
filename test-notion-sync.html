@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Sync System Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007acc;
+            padding-bottom: 10px;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .test-section h3 {
+            color: #007acc;
+            margin-top: 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #007acc, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .config-section {
+            background: #e7f3ff;
+            border: 1px solid #007acc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: #f0f8ff;
+            border-left: 4px solid #007acc;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔄 Notion Project Sync System Test</h1>
+
+        <div class="info-box">
+            <strong>ℹ️ About this test:</strong><br>
+            This page tests your Notion sync system to ensure it's working correctly. It will check your Cloudflare
+            Worker endpoints and Notion integration.
+        </div>
+
+        <!-- Quick Connectivity Test -->
+        <div class="test-section" style="background-color: #f0f8ff; border-color: #007acc;">
+            <h3>🌐 Quick Connectivity Test</h3>
+            <p>Test basic connectivity to your Cloudflare Worker before running detailed tests.</p>
+            <button onclick="testConnectivity()">Test Connectivity</button>
+            <div id="connectivityResult" class="status" style="display: none;"></div>
+            <pre id="connectivityResponse" class="response" style="display: none;"></pre>
+        </div>
+
+        <!-- Configuration Check -->
+        <div class="test-section">
+            <h3>🔧 Configuration Check</h3>
+            <p>Check if your Cloudflare Worker has the proper environment variables configured.</p>
+            <button onclick="testConfiguration()">Check Configuration</button>
+            <div id="configResult" class="status" style="display: none;"></div>
+            <pre id="configResponse" class="response" style="display: none;"></pre>
+        </div>
+
+        <!-- Notion Connection Test -->
+        <div class="test-section">
+            <h3>📋 Notion Database Test</h3>
+            <p>Test direct connection to your Notion database and fetch project data.</p>
+            <button onclick="testNotionConnection()">Test Notion Connection</button>
+            <div id="notionResult" class="status" style="display: none;"></div>
+            <pre id="notionResponse" class="response" style="display: none;"></pre>
+        </div>
+
+        <!-- Sync Status Check -->
+        <div class="test-section">
+            <h3>📊 Sync Status</h3>
+            <p>Check the current status of your data synchronization system.</p>
+            <button onclick="checkSyncStatus()">Check Sync Status</button>
+            <div id="statusResult" class="status" style="display: none;"></div>
+            <pre id="statusResponse" class="response" style="display: none;"></pre>
+        </div>
+
+        <!-- Full Data Sync -->
+        <div class="test-section">
+            <h3>🚀 Full Data Sync</h3>
+            <p>Perform a complete synchronization of your Notion projects to the public data folder.</p>
+            <div class="info-box">
+                <strong>⚠️ Note:</strong> This operation may take 30-60 seconds depending on the number of projects and
+                images. Please be patient.
+            </div>
+            <label>
+                <input type="checkbox" id="includeImages" checked> Include images in sync
+            </label><br>
+            <label>
+                <input type="checkbox" id="forceSync"> Force complete resync (ignores cache)
+            </label><br><br>
+            <button onclick="performFullSync()" id="syncButton">Start Full Sync</button>
+            <div id="syncResult" class="status" style="display: none;"></div>
+            <pre id="syncResponse" class="response" style="display: none;"></pre>
+        </div>
+
+        <!-- Debug Information -->
+        <div class="test-section">
+            <h3>🔍 Debug Information</h3>
+            <p>Get detailed debug information about your Notion database properties.</p>
+            <button onclick="getDebugInfo()">Get Debug Info</button>
+            <div id="debugResult" class="status" style="display: none;"></div>
+            <pre id="debugResponse" class="response" style="display: none;"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function showStatus(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${type}`;
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+
+        function showResponse(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.style.display = 'block';
+        }
+
+        async function makeRequest(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+
+                // Check if response is ok before parsing JSON
+                if (response.ok) {
+                    const data = await response.json();
+                    return { response, data };
+                } else {
+                    // Handle non-200 responses
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+                    }
+                    return { response, data: errorData };
+                }
+            } catch (error) {
+                // Handle network errors
+                return {
+                    response: { ok: false, status: 0 },
+                    data: { error: `Network error: ${error.message}` }
+                };
+            }
+        }
+
+        async function testConnectivity() {
+            showStatus('connectivityResult', 'loading', 'Testing basic connectivity...');
+
+            try {
+                // Test a simple endpoint that should always respond
+                const { response, data } = await makeRequest('/api/debug');
+
+                if (response.ok) {
+                    showStatus('connectivityResult', 'success',
+                        '✅ Connected successfully to Cloudflare Worker');
+                } else if (response.status === 0) {
+                    showStatus('connectivityResult', 'error',
+                        '❌ Cannot connect to worker. Check if your proxy is configured correctly.');
+                } else {
+                    showStatus('connectivityResult', 'error',
+                        `❌ Worker responded with error: HTTP ${response.status}`);
+                }
+
+                showResponse('connectivityResponse', data);
+            } catch (error) {
+                showStatus('connectivityResult', 'error',
+                    `❌ Network error: ${error.message}. Check your internet connection and proxy configuration.`);
+                showResponse('connectivityResponse', { error: error.message });
+            }
+        }
+
+        async function testConfiguration() {
+            showStatus('configResult', 'loading', 'Checking configuration...');
+
+            try {
+                const { response, data } = await makeRequest('/api/debug');
+
+                if (response.ok) {
+                    const hasRequiredConfig = data.hasToken && data.hasDatabase;
+                    showStatus('configResult', hasRequiredConfig ? 'success' : 'error',
+                        hasRequiredConfig ? 'Configuration looks good!' : 'Missing required configuration');
+                } else {
+                    showStatus('configResult', 'error', `Configuration check failed: ${data.error || 'Unknown error'}`);
+                }
+
+                showResponse('configResponse', data);
+            } catch (error) {
+                showStatus('configResult', 'error', `Network error: ${error.message}`);
+                showResponse('configResponse', { error: error.message });
+            }
+        }
+
+        async function testNotionConnection() {
+            showStatus('notionResult', 'loading', 'Testing Notion connection...');
+
+            try {
+                const { response, data } = await makeRequest('/api/projects');
+
+                if (response.ok && Array.isArray(data)) {
+                    showStatus('notionResult', 'success', `Successfully fetched ${data.length} projects from Notion`);
+                } else {
+                    showStatus('notionResult', 'error', `Notion connection failed: ${data.error || 'Unknown error'}`);
+                }
+
+                showResponse('notionResponse', data);
+            } catch (error) {
+                showStatus('notionResult', 'error', `Network error: ${error.message}`);
+                showResponse('notionResponse', { error: error.message });
+            }
+        }
+
+        async function checkSyncStatus() {
+            showStatus('statusResult', 'loading', 'Checking sync status...');
+
+            try {
+                const { response, data } = await makeRequest('/api/data/status');
+
+                if (response.ok && data.status) {
+                    const isOperational = data.status === 'operational';
+                    let statusMessage = '';
+
+                    if (isOperational) {
+                        const features = [];
+                        if (data.features?.notionSync) features.push('Notion');
+                        if (data.features?.githubIntegration) features.push('GitHub');
+                        if (data.features?.imageManagement) features.push('Images');
+
+                        statusMessage = `✅ System operational with: ${features.join(', ')}`;
+                    } else {
+                        statusMessage = `❌ System has issues: ${data.error || 'Unknown status'}`;
+                    }
+
+                    showStatus('statusResult', isOperational ? 'success' : 'error', statusMessage);
+                } else {
+                    showStatus('statusResult', 'error',
+                        `Status check failed: ${data.error || response.statusText || 'Unknown error'}`);
+                }
+
+                showResponse('statusResponse', data);
+            } catch (error) {
+                showStatus('statusResult', 'error', `Network error: ${error.message}`);
+                showResponse('statusResponse', { error: error.message });
+            }
+        }
+
+        async function performFullSync() {
+            const syncButton = document.getElementById('syncButton');
+            const originalText = syncButton.textContent;
+
+            // Disable button and show progress
+            syncButton.disabled = true;
+            syncButton.textContent = 'Syncing... Please wait';
+
+            showStatus('syncResult', 'loading', 'Performing full data sync... This may take up to 60 seconds.');
+
+            try {
+                const body = {
+                    includeImages: document.getElementById('includeImages').checked,
+                    force: document.getElementById('forceSync').checked
+                };
+
+                const { response, data } = await makeRequest('/api/data/sync', 'POST', body);
+
+                if (response.ok && data.success) {
+                    const projectCount = data.data?.projectCount || 0;
+                    const githubUpdated = data.data?.githubUpdated ? ' (GitHub updated)' : ' (Local only)';
+                    const syncTime = data.data?.syncTimestamp ? new Date(data.data.syncTimestamp).toLocaleString() : 'Unknown';
+
+                    showStatus('syncResult', 'success',
+                        `✅ Sync completed! ${projectCount} projects synchronized${githubUpdated} at ${syncTime}`);
+                } else if (response.ok && !data.success) {
+                    showStatus('syncResult', 'error',
+                        `❌ Sync failed: ${data.error || data.details || 'Unknown sync error'}`);
+                } else {
+                    showStatus('syncResult', 'error',
+                        `❌ Request failed: ${data.error || response.statusText || 'Unknown request error'}`);
+                }
+
+                showResponse('syncResponse', data);
+            } catch (error) {
+                showStatus('syncResult', 'error', `Network error: ${error.message}`);
+                showResponse('syncResponse', { error: error.message });
+            } finally {
+                // Re-enable button
+                syncButton.disabled = false;
+                syncButton.textContent = originalText;
+            }
+        }
+
+        async function getDebugInfo() {
+            showStatus('debugResult', 'loading', 'Getting debug information...');
+
+            try {
+                const { response, data } = await makeRequest('/api/debug/properties');
+
+                if (response.ok) {
+                    showStatus('debugResult', 'success', 'Debug information retrieved successfully');
+                } else {
+                    showStatus('debugResult', 'error', `Debug info failed: ${data.error || 'Unknown error'}`);
+                }
+
+                showResponse('debugResponse', data);
+            } catch (error) {
+                showStatus('debugResult', 'error', `Network error: ${error.message}`);
+                showResponse('debugResponse', { error: error.message });
+            }
+        }
+
+        // Auto-run connectivity and configuration check on page load
+        window.onload = function () {
+            console.log('🚀 Notion Sync Test Page Loaded');
+            console.log('🔗 API Base URL:', API_BASE);
+
+            // Run connectivity test first, then configuration
+            setTimeout(() => {
+                testConnectivity().then(() => {
+                    setTimeout(() => {
+                        testConfiguration();
+                    }, 1000);
+                });
+            }, 500);
+        };
+    </script>
+</body>
+
+</html>
