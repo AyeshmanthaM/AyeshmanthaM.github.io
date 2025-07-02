@@ -59,6 +59,26 @@ export default {
                 return await this.handleNotionSync(request, env, corsHeaders);
             }
 
+            // Route: POST /api/data/sync - Enhanced sync with GitHub data branch
+            if (path === '/api/data/sync' && request.method === 'POST') {
+                return await this.handleDataSync(request, env, corsHeaders);
+            }
+
+            // Route: POST /api/data/backup - Create comprehensive backup to GitHub
+            if (path === '/api/data/backup' && request.method === 'POST') {
+                return await this.handleDataBackup(request, env, corsHeaders);
+            }
+
+            // Route: GET /api/data/status - Get synchronization status
+            if (path === '/api/data/status' && request.method === 'GET') {
+                return await this.handleDataStatus(request, env, corsHeaders);
+            }
+
+            // Route: POST /api/data/migrate - Migrate images from Notion to GitHub
+            if (path === '/api/data/migrate' && request.method === 'POST') {
+                return await this.handleImageMigration(request, env, corsHeaders);
+            }
+
             // Route: GET /api/debug - Debug endpoint to check configuration
             if (path === '/api/debug' && request.method === 'GET') {
                 return new Response(JSON.stringify({
@@ -504,6 +524,587 @@ export default {
                 status: 500,
                 headers: corsHeaders,
             });
+        }
+    },
+
+    // Enhanced data synchronization with GitHub integration
+    async handleDataSync(request, env, corsHeaders) {
+        try {
+            const { force = false, includeImages = true } = await request.json().catch(() => ({}));
+            
+            // Step 1: Fetch all projects from Notion
+            const notionResponse = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                    'Notion-Version': '2022-06-28',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sorts: [
+                        {
+                            property: 'Last edited time',
+                            direction: 'descending'
+                        }
+                    ]
+                }),
+            });
+
+            if (!notionResponse.ok) {
+                throw new Error(`Notion API error: ${notionResponse.status}`);
+            }
+
+            const notionData = await notionResponse.json();
+            const projects = [];
+            const syncTimestamp = new Date().toISOString();
+            
+            // Step 2: Process each project and fetch detailed content
+            for (const page of notionData.results) {
+                try {
+                    // Fetch page content blocks
+                    const blocksResponse = await fetch(`https://api.notion.com/v1/blocks/${page.id}/children`, {
+                        headers: {
+                            'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                            'Notion-Version': '2022-06-28',
+                        },
+                    });
+
+                    const blocksData = blocksResponse.ok ? await blocksResponse.json() : { results: [] };
+
+                    const project = {
+                        id: `project-${page.id.replace(/-/g, '')}`,
+                        title: page.properties.Title?.title[0]?.plain_text || 'Untitled',
+                        description: page.properties.Description?.rich_text[0]?.plain_text || '',
+                        fullDescription: convertBlocksToText(blocksData.results),
+                        category: page.properties.Category?.select?.name || 'other',
+                        technologies: page.properties.Technologies?.multi_select?.map(tech => tech.name) || [],
+                        date: page.properties.Date?.date?.start || new Date().toISOString().split('T')[0],
+                        status: page.properties.Status?.select?.name || 'Published',
+                        images: {
+                            primary: getImageUrl(page.properties['Image URL']?.files, page.properties),
+                            gallery: this.extractGalleryImages(page.properties),
+                            local: {
+                                primary: `images/${page.id.replace(/-/g, '')}/primary.jpg`,
+                                gallery: []
+                            }
+                        },
+                        links: this.extractProjectLinks(page.properties),
+                        metadata: {
+                            notionId: page.id,
+                            lastUpdated: page.last_edited_time,
+                            syncedAt: syncTimestamp,
+                            version: 1
+                        }
+                    };
+
+                    projects.push(project);
+                } catch (error) {
+                    console.error(`Error processing project ${page.id}:`, error);
+                }
+            }
+
+            // Step 3: Update GitHub data branch (if GitHub token is available)
+            let githubUpdateResult = null;
+            if (env.GITHUB_TOKEN) {
+                githubUpdateResult = await this.updateGitHubDataBranch(projects, env, syncTimestamp);
+            }
+
+            // Step 4: Store sync metadata in KV storage
+            if (env.BACKUP_KV) {
+                const syncMetadata = {
+                    timestamp: syncTimestamp,
+                    projectCount: projects.length,
+                    githubUpdated: !!githubUpdateResult?.success,
+                    projects: projects.map(p => ({ id: p.id, title: p.title, lastUpdated: p.metadata.lastUpdated }))
+                };
+                await env.BACKUP_KV.put(`data-sync-${Date.now()}`, JSON.stringify(syncMetadata));
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Data synchronization completed',
+                data: {
+                    projectCount: projects.length,
+                    syncTimestamp,
+                    githubUpdated: githubUpdateResult?.success || false,
+                    projects: projects.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        category: p.category,
+                        lastUpdated: p.metadata.lastUpdated
+                    }))
+                }
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Data sync error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to sync data',
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Create comprehensive backup to GitHub data branch
+    async handleDataBackup(request, env, corsHeaders) {
+        try {
+            const { includeProjects = true, includeImages = false } = await request.json().catch(() => ({}));
+            
+            // Fetch all data from Notion
+            const notionResponse = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                    'Notion-Version': '2022-06-28',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+
+            if (!notionResponse.ok) {
+                throw new Error(`Notion API error: ${notionResponse.status}`);
+            }
+
+            const data = await notionResponse.json();
+            const backupTimestamp = new Date().toISOString();
+            
+            const backupData = {
+                version: '2.0.0',
+                type: 'comprehensive',
+                timestamp: backupTimestamp,
+                metadata: {
+                    source: 'notion',
+                    projectCount: data.results.length,
+                    includeImages,
+                    includeProjects
+                },
+                projects: data.results,
+                schema: {
+                    description: 'Full Notion database backup with enhanced metadata',
+                    format: 'notion-api-v2022-06-28'
+                }
+            };
+
+            // Store in KV for history
+            if (env.BACKUP_KV) {
+                const backupKey = `comprehensive-backup-${Date.now()}`;
+                await env.BACKUP_KV.put(backupKey, JSON.stringify(backupData));
+            }
+
+            // Update GitHub data branch if token available
+            let githubBackupResult = null;
+            if (env.GITHUB_TOKEN) {
+                githubBackupResult = await this.createGitHubBackup(backupData, env);
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Comprehensive backup created',
+                data: {
+                    timestamp: backupTimestamp,
+                    projectCount: data.results.length,
+                    size: JSON.stringify(backupData).length,
+                    githubBackup: githubBackupResult?.success || false
+                }
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Data backup error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to create data backup',
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Get synchronization status
+    async handleDataStatus(request, env, corsHeaders) {
+        try {
+            // Get last sync info from KV
+            let lastSync = null;
+            if (env.BACKUP_KV) {
+                const list = await env.BACKUP_KV.list({ prefix: 'data-sync-' });
+                if (list.keys.length > 0) {
+                    const latestKey = list.keys.sort((a, b) => b.name.localeCompare(a.name))[0];
+                    const syncData = await env.BACKUP_KV.get(latestKey.name);
+                    if (syncData) {
+                        lastSync = JSON.parse(syncData);
+                    }
+                }
+            }
+
+            // Check GitHub data branch status (if token available)
+            let githubStatus = null;
+            if (env.GITHUB_TOKEN) {
+                githubStatus = await this.checkGitHubDataBranchStatus(env);
+            }
+
+            return new Response(JSON.stringify({
+                status: 'operational',
+                lastSync: lastSync,
+                github: githubStatus,
+                endpoints: {
+                    sync: '/api/data/sync',
+                    backup: '/api/data/backup',
+                    status: '/api/data/status',
+                    migrate: '/api/data/migrate'
+                },
+                features: {
+                    notionSync: !!env.NOTION_TOKEN,
+                    githubIntegration: !!env.GITHUB_TOKEN,
+                    kvStorage: !!env.BACKUP_KV,
+                    imageManagement: true
+                }
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Data status error:', error);
+            return new Response(JSON.stringify({
+                status: 'error',
+                error: error.message
+            }), {
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Handle image migration from Notion to GitHub
+    async handleImageMigration(request, env, corsHeaders) {
+        try {
+            const { projectIds = [], downloadImages = true } = await request.json().catch(() => ({}));
+            
+            if (!env.GITHUB_TOKEN) {
+                throw new Error('GitHub token required for image migration');
+            }
+
+            const migrationResults = [];
+            
+            // If no specific project IDs provided, get all projects
+            if (projectIds.length === 0) {
+                const response = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                        'Notion-Version': '2022-06-28',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filter: {
+                            property: 'Status',
+                            select: {
+                                equals: 'Published'
+                            }
+                        }
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    projectIds.push(...data.results.map(p => p.id));
+                }
+            }
+
+            // Process each project for image migration
+            for (const projectId of projectIds) {
+                try {
+                    const migrationResult = await this.migrateProjectImages(projectId, env, downloadImages);
+                    migrationResults.push(migrationResult);
+                } catch (error) {
+                    migrationResults.push({
+                        projectId,
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+
+            const successCount = migrationResults.filter(r => r.success).length;
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: `Image migration completed for ${successCount}/${migrationResults.length} projects`,
+                results: migrationResults,
+                summary: {
+                    total: migrationResults.length,
+                    successful: successCount,
+                    failed: migrationResults.length - successCount
+                }
+            }), {
+                headers: corsHeaders,
+            });
+
+        } catch (error) {
+            console.error('Image migration error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Failed to migrate images',
+                details: error.message
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Helper: Extract gallery images from Notion properties
+    extractGalleryImages(properties) {
+        const galleryImages = [];
+        
+        // Look for additional image properties
+        const imagePropertyNames = ['Gallery', 'gallery', 'Screenshots', 'screenshots', 'Additional Images'];
+        
+        for (const propName of imagePropertyNames) {
+            const prop = properties[propName];
+            if (prop?.files && Array.isArray(prop.files)) {
+                prop.files.forEach(file => {
+                    if (file.type === 'file' && file.file?.url) {
+                        galleryImages.push(file.file.url);
+                    } else if (file.type === 'external' && file.external?.url) {
+                        galleryImages.push(file.external.url);
+                    }
+                });
+            }
+        }
+        
+        return galleryImages;
+    },
+
+    // Helper: Extract project links from Notion properties
+    extractProjectLinks(properties) {
+        return {
+            github: properties['GitHub']?.url || properties['Repository']?.url || '',
+            demo: properties['Demo']?.url || properties['Live Demo']?.url || properties['Website']?.url || '',
+            documentation: properties['Documentation']?.url || properties['Docs']?.url || ''
+        };
+    },
+
+    // Helper: Update GitHub data branch with projects
+    async updateGitHubDataBranch(projects, env, timestamp) {
+        try {
+            const owner = 'AyeshmanthaM'; // Update with your GitHub username
+            const repo = 'AyeshmanthaM.github.io'; // Update with your repo name
+            const branch = 'data';
+
+            // Update metadata.json
+            const metadataContent = {
+                version: '1.0.0',
+                branch: 'data',
+                purpose: 'Portfolio project data and assets',
+                lastSync: timestamp,
+                projectCount: projects.length,
+                syncHistory: [], // In production, you'd maintain this history
+                structure: {
+                    projects: 'Individual project data files',
+                    images: 'Project images and screenshots',
+                    backups: 'Notion database backups',
+                    sync: 'Synchronization metadata'
+                },
+                endpoints: {
+                    sync: '/api/data/sync',
+                    backup: '/api/data/backup',
+                    restore: '/api/data/restore'
+                }
+            };
+
+            // Create/update individual project files
+            const updatePromises = projects.map(async (project) => {
+                const filePath = `data/projects/${project.id}.json`;
+                const content = JSON.stringify(project, null, 2);
+                
+                return this.updateGitHubFile(
+                    owner, repo, branch, filePath, content, 
+                    `Update project data for ${project.title}`, env.GITHUB_TOKEN
+                );
+            });
+
+            // Update metadata file
+            updatePromises.push(
+                this.updateGitHubFile(
+                    owner, repo, branch, 'data/metadata.json', 
+                    JSON.stringify(metadataContent, null, 2),
+                    `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
+                )
+            );
+
+            await Promise.all(updatePromises);
+
+            return { success: true, updatedFiles: projects.length + 1 };
+
+        } catch (error) {
+            console.error('GitHub update error:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Helper: Update a specific file in GitHub
+    async updateGitHubFile(owner, repo, branch, path, content, message, token) {
+        try {
+            const encodedContent = btoa(unescape(encodeURIComponent(content)));
+            
+            // Get current file SHA (if exists)
+            let sha = null;
+            try {
+                const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                    },
+                });
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                }
+            } catch (error) {
+                // File doesn't exist, which is fine for new files
+            }
+
+            // Update or create file
+            const updateData = {
+                message,
+                content: encodedContent,
+                branch
+            };
+
+            if (sha) {
+                updateData.sha = sha;
+            }
+
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData),
+            });
+
+            return response.ok;
+
+        } catch (error) {
+            console.error(`Error updating ${path}:`, error);
+            return false;
+        }
+    },
+
+    // Helper: Create GitHub backup
+    async createGitHubBackup(backupData, env) {
+        try {
+            const owner = 'AyeshmanthaM';
+            const repo = 'AyeshmanthaM.github.io';
+            const branch = 'data';
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filePath = `data/backups/full-backup-${timestamp}.json`;
+            
+            const success = await this.updateGitHubFile(
+                owner, repo, branch, filePath,
+                JSON.stringify(backupData, null, 2),
+                `Create comprehensive backup - ${timestamp}`,
+                env.GITHUB_TOKEN
+            );
+
+            return { success, filePath };
+
+        } catch (error) {
+            console.error('GitHub backup error:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Helper: Check GitHub data branch status
+    async checkGitHubDataBranchStatus(env) {
+        try {
+            const owner = 'AyeshmanthaM';
+            const repo = 'AyeshmanthaM.github.io';
+            const branch = 'data';
+
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${branch}`, {
+                headers: {
+                    'Authorization': `token ${env.GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                },
+            });
+
+            if (response.ok) {
+                const branchData = await response.json();
+                return {
+                    exists: true,
+                    lastCommit: branchData.commit.sha,
+                    lastUpdate: branchData.commit.commit.author.date
+                };
+            }
+
+            return { exists: false };
+
+        } catch (error) {
+            return { exists: false, error: error.message };
+        }
+    },
+
+    // Helper: Migrate images for a specific project
+    async migrateProjectImages(projectId, env, downloadImages) {
+        try {
+            // Fetch project details from Notion
+            const pageResponse = await fetch(`https://api.notion.com/v1/pages/${projectId}`, {
+                headers: {
+                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
+                    'Notion-Version': '2022-06-28',
+                },
+            });
+
+            if (!pageResponse.ok) {
+                throw new Error(`Failed to fetch project ${projectId}`);
+            }
+
+            const pageData = await pageResponse.json();
+            const projectTitle = pageData.properties.Title?.title[0]?.plain_text || 'Untitled';
+            
+            // Extract image URLs
+            const imageUrls = [];
+            const primaryImage = getImageUrl(pageData.properties['Image URL']?.files, pageData.properties);
+            if (primaryImage && !primaryImage.includes('unsplash.com')) {
+                imageUrls.push({ type: 'primary', url: primaryImage });
+            }
+
+            // Add gallery images
+            const galleryImages = this.extractGalleryImages(pageData.properties);
+            galleryImages.forEach((url, index) => {
+                imageUrls.push({ type: 'gallery', url, index });
+            });
+
+            // If downloadImages is true, you would implement actual download and upload logic here
+            // For now, we'll just return the migration plan
+            
+            return {
+                projectId,
+                title: projectTitle,
+                success: true,
+                imageCount: imageUrls.length,
+                images: imageUrls,
+                localPaths: imageUrls.map(img => `images/${projectId.replace(/-/g, '')}/${img.type}${img.index ? `-${img.index}` : ''}.jpg`)
+            };
+
+        } catch (error) {
+            return {
+                projectId,
+                success: false,
+                error: error.message
+            };
         }
     },
 };
