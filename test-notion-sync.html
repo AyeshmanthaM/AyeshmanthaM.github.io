@@ -66,12 +66,34 @@
             margin: 15px 0;
             border-radius: 6px;
             font-weight: bold;
+            white-space: pre-line;
+            line-height: 1.5;
         }
 
         .status.loading {
             background: #fff3cd;
             color: #856404;
             border: 1px solid #ffeaa7;
+            position: relative;
+        }
+
+        .status.loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #856404;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
         }
 
         .status.success {
@@ -353,7 +375,32 @@
             syncButton.disabled = true;
             syncButton.textContent = 'Syncing... Please wait';
 
-            showStatus('syncResult', 'loading', 'Performing full data sync... This may take up to 60 seconds.');
+            // Create detailed progress display
+            const progressSteps = [
+                '1️⃣ Initializing sync request...',
+                '2️⃣ Connecting to Notion API...',
+                '3️⃣ Fetching projects from Notion database...',
+                '4️⃣ Processing project data and content blocks...',
+                '5️⃣ Transforming data for public folder structure...',
+                '6️⃣ Checking GitHub integration status...',
+                '7️⃣ Creating/updating project JSON files...',
+                '8️⃣ Updating metadata.json with project index...',
+                '9️⃣ Finalizing sync and cleanup...',
+                '✅ Sync completed successfully!'
+            ];
+
+            let currentStep = 0;
+            
+            // Show initial progress
+            showStatus('syncResult', 'loading', progressSteps[currentStep]);
+
+            // Auto-advance progress steps during sync
+            const progressInterval = setInterval(() => {
+                currentStep++;
+                if (currentStep < progressSteps.length - 1) {
+                    showStatus('syncResult', 'loading', progressSteps[currentStep]);
+                }
+            }, 800); // Update every 800ms
 
             try {
                 const body = {
@@ -362,25 +409,48 @@
                 };
 
                 const { response, data } = await makeRequest('/api/data/sync', 'POST', body);
+                
+                // Clear progress interval
+                clearInterval(progressInterval);
 
                 if (response.ok && data.success) {
                     const projectCount = data.data?.projectCount || 0;
                     const githubUpdated = data.data?.githubUpdated ? ' (GitHub updated)' : ' (Local only)';
                     const syncTime = data.data?.syncTimestamp ? new Date(data.data.syncTimestamp).toLocaleString() : 'Unknown';
 
-                    showStatus('syncResult', 'success',
-                        `✅ Sync completed! ${projectCount} projects synchronized${githubUpdated} at ${syncTime}`);
+                    // Show detailed success message
+                    const successMessage = `
+                        🎉 Full Sync Process Completed Successfully!
+                        
+                        📊 Results:
+                        • Projects synchronized: ${projectCount}
+                        • GitHub integration: ${githubUpdated}
+                        • Sync timestamp: ${syncTime}
+                        
+                        📁 Files created/updated:
+                        • public/data/metadata.json
+                        ${data.data?.projects ? data.data.projects.map(p => `• public/data/projects/${p.id}.json`).join('\n                        ') : ''}
+                        
+                        🌐 Access URLs (once GitHub Pages updates):
+                        • https://ayeshmantham.github.io/data/metadata.json
+                        ${data.data?.projects ? data.data.projects.map(p => `• https://ayeshmantham.github.io/data/projects/${p.id}.json`).join('\n                        ') : ''}
+                    `;
+
+                    showStatus('syncResult', 'success', successMessage);
                 } else if (response.ok && !data.success) {
+                    clearInterval(progressInterval);
                     showStatus('syncResult', 'error',
-                        `❌ Sync failed: ${data.error || data.details || 'Unknown sync error'}`);
+                        `❌ Sync Process Failed at Step ${currentStep + 1}: ${data.error || data.details || 'Unknown sync error'}`);
                 } else {
+                    clearInterval(progressInterval);
                     showStatus('syncResult', 'error',
-                        `❌ Request failed: ${data.error || response.statusText || 'Unknown request error'}`);
+                        `❌ Request Failed at Step ${currentStep + 1}: ${data.error || response.statusText || 'Unknown request error'}`);
                 }
 
                 showResponse('syncResponse', data);
             } catch (error) {
-                showStatus('syncResult', 'error', `Network error: ${error.message}`);
+                clearInterval(progressInterval);
+                showStatus('syncResult', 'error', `❌ Network Error at Step ${currentStep + 1}: ${error.message}`);
                 showResponse('syncResponse', { error: error.message });
             } finally {
                 // Re-enable button
