@@ -496,7 +496,7 @@ export default {
         try {
             const owner = 'AyeshmanthaM'; // Update with your GitHub username
             const repo = 'AyeshmanthaM.github.io'; // Update with your repo name
-            const branch = 'main'; // Use main branch instead of data branch
+            const branch = 'gh-pages'; // Use main branch instead of data branch
 
             // Update metadata.json
             const metadataContent = {
