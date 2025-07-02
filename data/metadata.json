@@ -1,19 +1,40 @@
 {
-    "version": "1.0.0",
-    "location": "public/data",
-    "purpose": "Portfolio project data stored in public folder",
-    "lastSync": null,
-    "projectCount": 0,
-    "syncHistory": [],
-    "structure": {
-        "projects": "Individual project data files"
-    },
-    "endpoints": {
-        "sync": "/api/data/sync"
-    },
-    "access": {
-        "baseUrl": "https://yourdomain.com/data/",
-        "projects": "projects/{project-id}.json",
-        "metadata": "metadata.json"
+  "version": "1.0.0",
+  "location": "public/data",
+  "purpose": "Portfolio project data stored in public folder",
+  "lastSync": "2025-07-02T19:56:22.015Z",
+  "projectCount": 2,
+  "syncHistory": [
+    {
+      "timestamp": "2025-07-02T19:56:22.015Z",
+      "projectCount": 2,
+      "deletedCount": 0,
+      "method": "cloudflare-worker"
     }
+  ],
+  "structure": {
+    "projects": "Individual project data files"
+  },
+  "endpoints": {
+    "sync": "/api/data/sync"
+  },
+  "access": {
+    "baseUrl": "https://ayeshmantham.github.io/data/",
+    "projects": "projects/{project-id}.json",
+    "metadata": "metadata.json"
+  },
+  "projects": [
+    {
+      "id": "project-220e0b952ee7802fa033e6a18d2bc723",
+      "title": "teset",
+      "category": "web",
+      "filename": "project-220e0b952ee7802fa033e6a18d2bc723.json"
+    },
+    {
+      "id": "project-220e0b952ee7802485f0df6c3243b8c3",
+      "title": "RGB LED Cube",
+      "category": "automation",
+      "filename": "project-220e0b952ee7802485f0df6c3243b8c3.json"
+    }
+  ]
 }
