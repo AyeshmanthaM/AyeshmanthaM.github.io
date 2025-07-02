@@ -584,7 +584,7 @@ export default {
                             primary: getImageUrl(page.properties['Image URL']?.files, page.properties),
                             gallery: this.extractGalleryImages(page.properties),
                             local: {
-                                primary: `images/${page.id.replace(/-/g, '')}/primary.jpg`,
+                                primary: `/images/projects/${page.id.replace(/-/g, '')}/primary.jpg`,
                                 gallery: []
                             }
                         },
@@ -603,10 +603,10 @@ export default {
                 }
             }
 
-            // Step 3: Update GitHub data branch (if GitHub token is available)
+            // Step 3: Update GitHub public folder (if GitHub token is available)
             let githubUpdateResult = null;
             if (env.GITHUB_TOKEN) {
-                githubUpdateResult = await this.updateGitHubDataBranch(projects, env, syncTimestamp);
+                githubUpdateResult = await this.updateGitHubPublicFolder(projects, env, syncTimestamp);
             }
 
             // Step 4: Store sync metadata in KV storage
@@ -697,10 +697,10 @@ export default {
                 await env.BACKUP_KV.put(backupKey, JSON.stringify(backupData));
             }
 
-            // Update GitHub data branch if token available
+            // Update GitHub public folder if token available
             let githubBackupResult = null;
             if (env.GITHUB_TOKEN) {
-                githubBackupResult = await this.createGitHubBackup(backupData, env);
+                githubBackupResult = await this.createGitHubPublicBackup(backupData, env);
             }
 
             return new Response(JSON.stringify({
@@ -745,10 +745,10 @@ export default {
                 }
             }
 
-            // Check GitHub data branch status (if token available)
+            // Check GitHub public folder status (if token available)
             let githubStatus = null;
             if (env.GITHUB_TOKEN) {
-                githubStatus = await this.checkGitHubDataBranchStatus(env);
+                githubStatus = await this.checkGitHubPublicFolderStatus(env);
             }
 
             return new Response(JSON.stringify({
@@ -818,7 +818,7 @@ export default {
                 }
             }
 
-            // Process each project for image migration
+            // Process each project for image migration to public/images/projects
             for (const projectId of projectIds) {
                 try {
                     const migrationResult = await this.migrateProjectImages(projectId, env, downloadImages);
@@ -892,37 +892,41 @@ export default {
         };
     },
 
-    // Helper: Update GitHub data branch with projects
-    async updateGitHubDataBranch(projects, env, timestamp) {
+    // Helper: Update GitHub public folder with projects
+    async updateGitHubPublicFolder(projects, env, timestamp) {
         try {
             const owner = 'AyeshmanthaM'; // Update with your GitHub username
             const repo = 'AyeshmanthaM.github.io'; // Update with your repo name
-            const branch = 'data';
+            const branch = 'main'; // Use main branch instead of data branch
 
             // Update metadata.json
             const metadataContent = {
                 version: '1.0.0',
-                branch: 'data',
-                purpose: 'Portfolio project data and assets',
+                location: 'public/data',
+                purpose: 'Portfolio project data stored in public folder',
                 lastSync: timestamp,
                 projectCount: projects.length,
                 syncHistory: [], // In production, you'd maintain this history
                 structure: {
                     projects: 'Individual project data files',
-                    images: 'Project images and screenshots',
-                    backups: 'Notion database backups',
-                    sync: 'Synchronization metadata'
+                    backups: 'Notion database backups'
                 },
                 endpoints: {
                     sync: '/api/data/sync',
                     backup: '/api/data/backup',
                     restore: '/api/data/restore'
+                },
+                access: {
+                    baseUrl: 'https://ayeshmantham.github.io/data/',
+                    projects: 'projects/{project-id}.json',
+                    metadata: 'metadata.json',
+                    backups: 'backups/{backup-file}.json'
                 }
             };
 
             // Create/update individual project files
             const updatePromises = projects.map(async (project) => {
-                const filePath = `data/projects/${project.id}.json`;
+                const filePath = `public/data/projects/${project.id}.json`;
                 const content = JSON.stringify(project, null, 2);
                 
                 return this.updateGitHubFile(
@@ -934,7 +938,7 @@ export default {
             // Update metadata file
             updatePromises.push(
                 this.updateGitHubFile(
-                    owner, repo, branch, 'data/metadata.json', 
+                    owner, repo, branch, 'public/data/metadata.json', 
                     JSON.stringify(metadataContent, null, 2),
                     `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
                 )
@@ -1002,14 +1006,14 @@ export default {
         }
     },
 
-    // Helper: Create GitHub backup
-    async createGitHubBackup(backupData, env) {
+    // Helper: Create GitHub public backup
+    async createGitHubPublicBackup(backupData, env) {
         try {
             const owner = 'AyeshmanthaM';
             const repo = 'AyeshmanthaM.github.io';
-            const branch = 'data';
+            const branch = 'main';
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filePath = `data/backups/full-backup-${timestamp}.json`;
+            const filePath = `public/data/backups/full-backup-${timestamp}.json`;
             
             const success = await this.updateGitHubFile(
                 owner, repo, branch, filePath,
@@ -1026,14 +1030,15 @@ export default {
         }
     },
 
-    // Helper: Check GitHub data branch status
-    async checkGitHubDataBranchStatus(env) {
+    // Helper: Check GitHub public folder status
+    async checkGitHubPublicFolderStatus(env) {
         try {
             const owner = 'AyeshmanthaM';
             const repo = 'AyeshmanthaM.github.io';
-            const branch = 'data';
+            const branch = 'main';
 
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches/${branch}`, {
+            // Check if public/data/metadata.json exists
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/public/data/metadata.json?ref=${branch}`, {
                 headers: {
                     'Authorization': `token ${env.GITHUB_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
@@ -1041,11 +1046,11 @@ export default {
             });
 
             if (response.ok) {
-                const branchData = await response.json();
+                const fileData = await response.json();
                 return {
                     exists: true,
-                    lastCommit: branchData.commit.sha,
-                    lastUpdate: branchData.commit.commit.author.date
+                    lastUpdate: fileData.commit ? fileData.commit.date : 'unknown',
+                    size: fileData.size
                 };
             }
 
@@ -1096,7 +1101,7 @@ export default {
                 success: true,
                 imageCount: imageUrls.length,
                 images: imageUrls,
-                localPaths: imageUrls.map(img => `images/${projectId.replace(/-/g, '')}/${img.type}${img.index ? `-${img.index}` : ''}.jpg`)
+                localPaths: imageUrls.map(img => `/images/projects/${projectId.replace(/-/g, '')}/${img.type}${img.index ? `-${img.index}` : ''}.jpg`)
             };
 
         } catch (error) {

@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "location": "public/data",
+  "purpose": "Portfolio project data stored in public folder",
+  "lastSync": null,
+  "projectCount": 0,
+  "syncHistory": [],
+  "structure": {
+    "projects": "Individual project data files",
+    "backups": "Notion database backups"
+  },
+  "endpoints": {
+    "sync": "/api/data/sync",
+    "backup": "/api/data/backup",
+    "restore": "/api/data/restore"
+  },
+  "access": {
+    "baseUrl": "https://yourdomain.com/data/",
+    "projects": "projects/{project-id}.json",
+    "metadata": "metadata.json",
+    "backups": "backups/{backup-file}.json"
+  }
+}

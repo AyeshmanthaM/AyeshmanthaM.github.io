@@ -10,7 +10,16 @@ Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.ne
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
+- [Prerequi2. **Deploy Enhanced Worker**
+   ```bash
+   # Use the provided deployment script
+   ./deploy-enhanced-sync.ps1  # Windows PowerShell
+   # or
+   ./deploy-enhanced-sync.sh   # Linux/macOS
+
+   # Or deploy manually
+   wrangler deploy
+   ```erequisites)
 - [Installation & Setup](#installation--setup)
 - [Notion Integration](#notion-integration)
 - [Enhanced Data Synchronization](#enhanced-data-synchronization)
@@ -29,10 +38,10 @@ Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.ne
 - **Type Animations**: Dynamic typing effects using React Type Animation
 - **3D Elements**: Three.js integration for interactive visual elements
 - **Notion Integration**: Connect to Notion database for dynamic project management
-- **Enhanced Data Sync**: Automated synchronization between Notion and GitHub data branch
-- **GitHub Data Branch**: Dedicated branch for storing project data and assets
+- **Enhanced Data Sync**: Automated synchronization between Notion and public data folder
+- **Public Data Storage**: All project data stored in public folder for direct access
 - **Comprehensive Backup**: Multiple backup strategies for data security
-- **Image Migration**: Automated image migration from Notion to GitHub
+- **Image Management**: Organized image storage in public/images/projects
 - **Fast Loading**: Optimized with Vite for lightning-fast development and build times
 - **SEO Optimized**: Proper meta tags and semantic HTML structure
 - **Modern UI**: Clean and professional design with Tailwind CSS
@@ -47,7 +56,7 @@ Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.ne
 - **3D Graphics**: Three.js
 - **Icons**: Lucide React
 - **Backend**: Cloudflare Workers (for API proxy and data sync)
-- **Data Storage**: Notion API + GitHub Data Branch
+- **Data Storage**: Notion API + Public Data Folder
 - **Deployment**: GitHub Pages
 - **Image Management**: Automated migration and optimization
 
@@ -373,12 +382,12 @@ The portfolio now features an advanced data synchronization system that goes bey
 
 ### 🌟 Key Features
 
-- **GitHub Data Branch**: Dedicated `data` branch for storing project files and assets
+- **Public Data Folder**: All project data stored in `public/data/` for direct access
 - **Automated Sync**: Trigger synchronization via API endpoints
 - **Comprehensive Backup**: Multiple backup strategies for data security
-- **Image Migration**: Automatic migration from Notion to GitHub
-- **Version Control**: Git history for all data changes
-- **Redundancy**: Multiple storage locations (Notion, GitHub, KV storage)
+- **Image Management**: Organized storage in `public/images/projects/`
+- **Direct URLs**: All data accessible via website URLs
+- **SEO Friendly**: Data can be indexed by search engines
 
 ### 🚀 New API Endpoints
 
@@ -389,25 +398,29 @@ The enhanced system introduces several new endpoints:
 - `GET /api/data/status` - System status and health check
 - `POST /api/data/migrate` - Image migration from Notion to GitHub
 
-### 📁 Data Branch Structure
+### 📁 Public Data Structure
 
 ```
-data/
-├── README.md                     # Documentation
-├── metadata.json                 # Sync metadata and status
-├── projects/
-│   ├── schema.json              # Data structure schema
-│   ├── project-001.json         # Individual project files
-│   └── project-002.json
+public/
+├── data/
+│   ├── README.md                     # Documentation
+│   ├── metadata.json                 # Sync metadata and status
+│   ├── projects/
+│   │   ├── schema.json              # Data structure schema
+│   │   ├── project-001.json         # Individual project files
+│   │   └── project-002.json
+│   └── backups/
+│       ├── full-backup-2025-07-02.json
+│       └── incremental-backup-2025-07-01.json
 ├── images/
-│   ├── project-001/
-│   │   ├── primary.jpg
-│   │   └── gallery1.jpg
-│   └── project-002/
-│       └── primary.jpg
-└── backups/
-    ├── full-backup-2025-07-02.json
-    └── incremental-backup-2025-07-01.json
+│   ├── projects/
+│   │   ├── project-001/
+│   │   │   ├── primary.jpg
+│   │   │   └── gallery1.jpg
+│   │   └── project-002/
+│   │       └── primary.jpg
+│   └── ...
+└── ...
 ```
 
 ### ⚙️ Setup Instructions
@@ -448,19 +461,19 @@ BACKUP_KV=kv_namespace_for_backups
 
 ### 📊 Benefits
 
-1. **Performance**: Local data access for faster loading
-2. **Reliability**: Multiple backup locations reduce data loss risk
-3. **Scalability**: GitHub's infrastructure for asset hosting
-4. **Automation**: Reduced manual intervention for data management
-5. **Version Control**: Complete history of all data changes
-6. **Flexibility**: Structured data enables custom implementations
+1. **Direct Access**: Data accessible via https://yourdomain.com/data/
+2. **Performance**: Local data access for faster loading
+3. **Simplicity**: No separate branch management required
+4. **SEO Friendly**: Data can be indexed by search engines
+5. **CDN Compatible**: Works with GitHub Pages and CDNs
+6. **Automation**: Reduced manual intervention for data management
 
 ### 📚 Detailed Documentation
 
 For comprehensive setup and usage instructions:
 - [Enhanced Data Sync Setup Guide](./Doc/DATA_SYNC_SETUP.md)
+- [Public Data Folder](./public/data/)
 - [Testing Interface](./test-data-sync.html)
-- [Data Branch](https://github.com/AyeshmanthaM/AyeshmanthaM.github.io/tree/data)
 
 ### 🔍 Monitoring and Troubleshooting
 

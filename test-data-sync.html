@@ -95,7 +95,7 @@
 <body>
     <div class="container">
         <h1>🔄 Data Synchronization Testing Interface</h1>
-        <p>Test the new enhanced data synchronization endpoints for your portfolio website.</p>
+        <p>Test the enhanced data synchronization endpoints for your portfolio website. All data is now stored in the public folder for direct access.</p>
         
         <div class="config-section">
             <h3>⚙️ Configuration</h3>
@@ -118,7 +118,7 @@
         <!-- Data Sync -->
         <div class="endpoint-section">
             <h3>🔄 Data Synchronization</h3>
-            <p>Trigger enhanced data sync from Notion to GitHub data branch.</p>
+            <p>Trigger enhanced data sync from Notion to public data folder.</p>
             <label>
                 <input type="checkbox" id="forceSync"> Force sync (ignore cache)
             </label><br>
@@ -133,7 +133,7 @@
         <!-- Data Backup -->
         <div class="endpoint-section">
             <h3>💾 Data Backup</h3>
-            <p>Create comprehensive backup to GitHub data branch.</p>
+            <p>Create comprehensive backup to public data folder.</p>
             <label>
                 <input type="checkbox" id="includeProjects" checked> Include projects
             </label><br>
@@ -148,7 +148,7 @@
         <!-- Image Migration -->
         <div class="endpoint-section">
             <h3>🖼️ Image Migration</h3>
-            <p>Migrate images from Notion to GitHub data branch.</p>
+            <p>Migrate images from Notion to public images folder.</p>
             <label for="projectIds">Project IDs (comma-separated, leave empty for all):</label>
             <input type="text" id="projectIds" placeholder="project-001,project-002">
             <label>

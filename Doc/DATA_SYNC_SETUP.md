@@ -6,9 +6,10 @@ This enhanced system provides automated synchronization between Notion and a Git
 
 ## New Features
 
-### 1. GitHub Data Branch Integration
-- **Branch**: `data` - Dedicated branch for storing project data and assets
-- **Structure**: Organized folders for projects, images, and backups
+### 1. Public Data Folder Integration
+- **Location**: `public/data/` - All project data stored in public folder
+- **Structure**: Organized folders for projects and backups
+- **Direct Access**: Data accessible via website URLs
 - **Automation**: Automatic updates when sync endpoints are triggered
 
 ### 2. New API Endpoints
@@ -17,7 +18,7 @@ This enhanced system provides automated synchronization between Notion and a Git
 Enhanced synchronization that:
 - Fetches all project data from Notion
 - Processes and structures data with enhanced metadata
-- Updates individual project files in GitHub data branch
+- Updates individual project files in public/data folder
 - Maintains synchronization history
 
 **Request Body:**
@@ -45,7 +46,7 @@ Enhanced synchronization that:
 #### `/api/data/backup` (POST)
 Comprehensive backup creation:
 - Creates full Notion database backup
-- Stores backup in GitHub data branch
+- Stores backup in public/data/backups folder
 - Maintains backup history in KV storage
 
 **Request Body:**
@@ -59,14 +60,14 @@ Comprehensive backup creation:
 #### `/api/data/status` (GET)
 Get synchronization status:
 - Last sync information
-- GitHub branch status
+- Public folder status
 - System health check
 - Feature availability
 
 #### `/api/data/migrate` (POST)
-Image migration from Notion to GitHub:
+Image migration from Notion to public folder:
 - Downloads images from Notion
-- Uploads to GitHub data branch
+- Uploads to public/images/projects folder
 - Updates project references
 
 **Request Body:**
@@ -93,11 +94,10 @@ Each project is now stored with comprehensive metadata:
   "status": "Published",
   "images": {
     "primary": "https://notion-url.com/image.jpg",
-    "gallery": ["additional-images"],
-    "local": {
-      "primary": "images/project-001/primary.jpg",
-      "gallery": ["images/project-001/gallery1.jpg"]
-    }
+    "gallery": ["additional-images"],      "local": {
+        "primary": "/images/projects/project-001/primary.jpg",
+        "gallery": ["/images/projects/project-001/gallery1.jpg"]
+      }
   },
   "links": {
     "github": "https://github.com/user/repo",
@@ -181,36 +181,40 @@ preview_id = "your-preview-namespace-id"
 3. **GitHub Upload**: Images uploaded to data branch structure
 4. **Reference Update**: Project files updated with local image paths
 
-## File Structure in Data Branch
+## File Structure in Public Folder
 
 ```
-data/
-├── README.md                     # Documentation
-├── metadata.json                 # Sync metadata
-├── projects/
-│   ├── schema.json              # Data structure schema
-│   ├── project-001.json         # Individual project files
-│   ├── project-002.json
-│   └── ...
+public/
+├── data/
+│   ├── README.md                     # Documentation
+│   ├── metadata.json                 # Sync metadata
+│   ├── projects/
+│   │   ├── schema.json              # Data structure schema
+│   │   ├── project-001.json         # Individual project files
+│   │   ├── project-002.json
+│   │   └── ...
+│   └── backups/
+│       ├── full-backup-2025-07-02.json
+│       └── comprehensive-backup-2025-07-01.json
 ├── images/
-│   ├── project-001/
-│   │   ├── primary.jpg
-│   │   └── gallery1.jpg
-│   └── project-002/
-│       └── primary.jpg
-└── backups/
-    ├── full-backup-2025-07-02.json
-    └── comprehensive-backup-2025-07-01.json
+│   ├── projects/
+│   │   ├── project-001/
+│   │   │   ├── primary.jpg
+│   │   │   └── gallery1.jpg
+│   │   └── project-002/
+│   │       └── primary.jpg
+│   └── ...
+└── ...
 ```
 
 ## Benefits
 
-1. **Redundancy**: Multiple backup locations (Notion, GitHub, KV)
-2. **Version Control**: Git history for all data changes
-3. **Performance**: Local data access for faster loading
-4. **Flexibility**: Structured data for custom implementations
-5. **Automation**: Reduced manual intervention
-6. **Scalability**: GitHub's infrastructure for asset hosting
+1. **Direct Access**: Data accessible via website URLs (https://yourdomain.com/data/)
+2. **Performance**: Local data access for faster loading
+3. **Simplicity**: No separate branch management required
+4. **Redundancy**: Multiple backup locations reduce data loss risk
+5. **SEO Friendly**: Data can be indexed by search engines
+6. **CDN Compatible**: Works with GitHub Pages and CDNs
 
 ## Monitoring
 

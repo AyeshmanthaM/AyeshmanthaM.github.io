@@ -1,4 +1,5 @@
 import { Project } from '../types';
+import { publicDataService } from './publicDataService';
 
 /**
  * Note: Direct Notion API calls don't work in browser environments due to CORS.
@@ -8,6 +9,8 @@ import { Project } from '../types';
  * 1. CORS headers for browser compatibility
  * 2. Secure storage of Notion credentials
  * 3. API request processing and response formatting
+ * 
+ * Enhanced with public data folder integration for direct access to synchronized data.
  */
 
 export interface NotionProject {
@@ -101,11 +104,22 @@ export const fetchProjectsFromAPI = async (): Promise<Project[]> => {
 };
 
 /**
- * Enhanced function that tries API first, then falls back to static data
+ * Enhanced function that tries public data first, then API, then falls back to static data
  */
 export const fetchProjectsWithFallback = async (): Promise<Project[]> => {
   try {
-    // Try API first
+    // Try public data first (fastest)
+    try {
+      const publicProjects = await publicDataService.getProjectsWithFallback();
+      if (publicProjects.length > 0) {
+        console.info('✅ Successfully loaded projects from public data folder');
+        return publicProjects;
+      }
+    } catch (error) {
+      console.debug('Public data not available, trying API:', error);
+    }
+    
+    // Try API second
     const apiProjects = await fetchProjectsFromAPI();
     
     if (apiProjects.length > 0) {
@@ -117,7 +131,7 @@ export const fetchProjectsWithFallback = async (): Promise<Project[]> => {
     console.info('📋 Using fallback static projects data');
     return [];
   } catch (error) {
-    console.error('❌ Failed to fetch from API, using fallback:', error);
+    console.error('❌ Failed to fetch from all sources, using fallback:', error);
     return [];
   }
 };
