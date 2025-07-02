@@ -1,0 +1,32 @@
+{
+  "id": "project-224e0b952ee78022bd02dcba216907fc",
+  "title": "test1",
+  "description": "no",
+  "fullDescription": "",
+  "category": "software",
+  "technologies": [
+    "Java",
+    "Python"
+  ],
+  "date": "2025-07-02",
+  "status": "Published",
+  "images": {
+    "primary": "https://prod-files-secure.s3.us-west-2.amazonaws.com/142e0c2a-1b65-433e-927e-70364d42a7e0/7f1e229c-f967-4002-8fe7-26a9fe89a0b0/ayesh.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB4663FVIHJO7%2F20250702%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250702T194135Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJIMEYCIQCl4wd3LiJWjq6NWr%2Frj9CCwCMh%2Fms9YknDxVhWcgyW6wIhANahXn8V0OswyyxgZpalS6EkNqTngaIaNgDqcclzMGbwKogECPT%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQABoMNjM3NDIzMTgzODA1Igz3%2F5QFqYxlM%2FpL8B0q3AMT1q%2B4vQYK1Avj0ZcpIzY5PvIObjv8zLktkCZnRzPSN6zQyYBe0GejWFmU5LMCdm22jyI19ltrahCBS7Uzc5BqUfH%2B5nwqb%2BLa02x0II0s57m9Qc1Jv%2FcF%2Bo8NQfjoRsyX%2BBVXkx%2BXIeLn1%2FqrwT12YoBRjDS4QtXo%2Fo3Cvfa%2FEI%2BNwDccaoTvqLdILKr6lVuVVs8e534%2BReBWgGS0LPQdjyAD4MoGZhJKvT9iNOD53zjT6%2FWXsZnd%2B6BwuEDQ0x65vsZDEzpuOOOUecUyjnWaiQzlUjIlVSU8kRq4uquGiqT1KRrUZtaWvZu59dW3RjAAQUOjAiVuoJG7dHjTDU1ZPf8T7q1m2VZTqJKLbakZDvnXE5BZCfvSOQmrEvBjLMm8W4%2FYhIWATu6uh03H3aEkLIW3tejLroKnEzqLbyIaBqyouM%2BulHq0KTnlMp37UDpuyJXVg4%2BWMqmOCdXYOtAAGJDWCuPMOTLbllUA9nilogaqdPmFFGsoA27R0nFYJEwcMdgk2FN%2BTbUZ9iNfGnZ2590fP52GilT3Q5x%2BboUETAddn%2BzT69hJL3vo0AxugjQFh8EWaZlSHPho0e94BawvGeoRaCQ5gmgtDOdJ4%2BtLC0REIz4t6ihWmcEoBDDZ9pXDBjqkATTRXb97O1vusJrXDJWplFwYSMcK7So81x7on77Davc6KW7aH7fnAlCVzzqCEtGDfWoUaJ878YRWFHHIHH1Hyto3vAok4wuB5IZ00aO9qmzNVUk4rFL67CMn8amfDUcy8Qvd6KD9awSdNEHp8sLgKX0dzpg9LgP%2FFM%2FAwJZ4DT3ulxE7MKokIohxw%2FxHekBq40DeZhK%2FzXpIyXdbLEGTTfZ3gCTD&X-Amz-Signature=27b21d0f8902951a64453d685d36894d3f46104f843d118ef99ebdbf833a2489&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "gallery": [],
+    "local": {
+      "primary": "/images/projects/224e0b952ee78022bd02dcba216907fc/primary.jpg",
+      "gallery": []
+    }
+  },
+  "links": {
+    "github": "",
+    "demo": "",
+    "documentation": ""
+  },
+  "metadata": {
+    "notionId": "224e0b95-2ee7-8022-bd02-dcba216907fc",
+    "lastUpdated": "2025-07-02T18:23:00.000Z",
+    "syncedAt": "2025-07-02T19:41:35.550Z",
+    "version": 1
+  }
+}
