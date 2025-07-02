@@ -11,21 +11,39 @@ export class PublicDataService {
    */
   async getProjects(): Promise<any[]> {
     try {
-      // First try to get the metadata to see available projects
+      // First get the metadata to see available projects
       const metadata = await this.getMetadata();
-      const projects: any[] = [];
+      
+      if (metadata.projectCount > 0 && metadata.projects) {
+        // Fetch individual project files based on metadata
+        const projectPromises = metadata.projects.map(async (projectInfo: any) => {
+          try {
+            const response = await fetch(`${this.baseUrl}/data/projects/${projectInfo.filename}`);
+            if (response.ok) {
+              return await response.json();
+            }
+            return null;
+          } catch (error) {
+            console.error(`Error fetching project ${projectInfo.filename}:`, error);
+            return null;
+          }
+        });
 
-      // If we have project count in metadata, try to fetch individual project files
-      if (metadata.projectCount > 0) {
-        // We'll need to implement a way to discover project IDs
-        // For now, try to fetch from the API endpoint
+        const projects = await Promise.all(projectPromises);
+        return projects.filter(project => project !== null);
+      }
+
+      // Fallback to API if public data is not available
+      try {
         const response = await fetch(`${this.baseUrl}/api/projects`);
         if (response.ok) {
           return await response.json();
         }
+      } catch (apiError) {
+        console.warn('API fallback also failed:', apiError);
       }
 
-      return projects;
+      return [];
     } catch (error) {
       console.error('Error fetching projects from public data:', error);
       throw error;
@@ -138,6 +156,49 @@ export class PublicDataService {
     }
 
     throw new Error('No data source available');
+  }
+
+  /**
+   * Trigger a sync of data from Notion to public folder
+   */
+  async syncData(): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/data/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          force: true,
+          includeImages: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Sync failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error syncing data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get sync status
+   */
+  async getSyncStatus(): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/data/status`);
+      if (!response.ok) {
+        throw new Error(`Status check failed: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting sync status:', error);
+      throw error;
+    }
   }
 }
 
