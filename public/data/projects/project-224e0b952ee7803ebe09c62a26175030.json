@@ -1,0 +1,32 @@
+{
+  "id": "project-224e0b952ee7803ebe09c62a26175030",
+  "title": "test night",
+  "description": "no",
+  "fullDescription": "",
+  "category": "software",
+  "technologies": [
+    "Python",
+    "C++"
+  ],
+  "date": "2025-07-03",
+  "status": "Published",
+  "images": {
+    "primary": "https://prod-files-secure.s3.us-west-2.amazonaws.com/142e0c2a-1b65-433e-927e-70364d42a7e0/8ce84b0b-f8f4-4d70-bc9e-ec4104ca46f4/ayesh1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466Y4W77HHB%2F20250702%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250702T204013Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIBIRhVUiX5iOaM7%2BFUrep0R0LZRFKI6E5h7WvhpxZe4pAiEAsUSsSnQDrq%2B0XfMtXtpO2sG99BC00IGZ5DJpU9FA%2FNkqiAQI9f%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAAGgw2Mzc0MjMxODM4MDUiDAQrzDXsGwTBRtflYircA4tV3mpcASA9HDTS8W0FHfSUQJWp91kHD4PTviv%2BE%2Fc2Coiy3gzDYJ1T3NnlB%2FxgXSfPaTf9LI8wjaAJUkx6uuHMCPQOxRL0Ghd9d9v2tvuAJWP4rgjmXsfRdKhipTtRu2DFd%2BOuY2hTYsTWpqF1xIitfe9c2CHdp3Ae%2FSQ04WpBzvy9be%2F8lLoNVgJw42ckT0AyUcWlCasvfpGsEOcTfku4M92RjsU4l9b7RVSp6qPFMzSOMCovT1EA%2Bahm8FvcwSFQOffHdFHM5PDoIwLYc4rBmOGaFHqgPIBaUyLvnF53MVYk7j5ieBS66pZr8vL4j%2BysaYJ%2BvTC2gzasFDCmEghu1bwMymRIz6HQbYJPH0BQpMYr5l7T38kwJj3mt86JjeLnTYuwyg7VrrFZZLFunRg2E9Anyrx3KreM4elHVhffcnQWSFKLwyvrhRYJgHSljZRAzitu4mNkS4jq%2FxBExv3VD8mHc1zJNQq5Z00gEB2Y8ev2VpTG5CdXnNVMQhiTO0oONUFEFg26DgYjMDX7kNy60EJbD45ae8Fx3vv9uiPJQr7RZ1FLt9dXQcVr2FPgQDsDl5hPDvfTLG3L%2FEC7HqLEUqHwYzK6KoQQ67V6RzRM50cqEEM64EmBt%2F7XMNmhlsMGOqUByz4J9%2B5M2lEM9C2W6QOR4%2FLJuSNv9oeVJRQVg3uuK1y010DraVDyWxdIIIhZ6ZTQ%2B8%2FBYo67rrihZpayN%2Bo%2F2ZyiCQtRmEE0Dt%2BMAGtjAVkluQ02F8U3Rnj1s1%2BbXzijtJtVAWXffWOopfkKh21kg%2FYlKY6kqkOzu8Dnidt9bepkDyh%2BT%2BztfK7JW%2ForHSpxBHHNOA6rE5hNh1oE6pe3LOP5SyK8&X-Amz-Signature=3958159fd7707305813550402c6c36a0a267c92ba065eb7acbf53e7c00cce113&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "gallery": [],
+    "local": {
+      "primary": "/images/projects/224e0b952ee7803ebe09c62a26175030/primary.jpg",
+      "gallery": []
+    }
+  },
+  "links": {
+    "github": "",
+    "demo": "",
+    "documentation": ""
+  },
+  "metadata": {
+    "notionId": "224e0b95-2ee7-803e-be09-c62a26175030",
+    "lastUpdated": "2025-07-02T20:38:00.000Z",
+    "syncedAt": "2025-07-02T20:40:13.983Z",
+    "version": 1
+  }
+}
