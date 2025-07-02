@@ -1,0 +1,68 @@
+{
+    "schema": {
+        "id": "string - Unique project identifier",
+        "title": "string - Project title",
+        "description": "string - Short description",
+        "fullDescription": "string - Detailed project description",
+        "category": "string - Project category",
+        "technologies": "array - List of technologies used",
+        "date": "string - Project date (YYYY-MM-DD)",
+        "status": "string - Published/Draft/Archived",
+        "images": {
+            "primary": "string - Primary project image URL",
+            "gallery": "array - Additional project images",
+            "local": {
+                "primary": "string - Local primary image path",
+                "gallery": "array - Local gallery image paths"
+            }
+        },
+        "links": {
+            "github": "string - GitHub repository URL",
+            "demo": "string - Live demo URL",
+            "documentation": "string - Documentation URL"
+        },
+        "metadata": {
+            "notionId": "string - Original Notion page ID",
+            "lastUpdated": "string - ISO timestamp",
+            "syncedAt": "string - ISO timestamp",
+            "version": "number - Data version"
+        }
+    },
+    "example": {
+        "id": "project-001",
+        "title": "Example Project",
+        "description": "A sample project showcasing the data structure",
+        "fullDescription": "This is a comprehensive example of how project data is structured in the public data folder.",
+        "category": "web",
+        "technologies": [
+            "React",
+            "TypeScript",
+            "Tailwind CSS"
+        ],
+        "date": "2025-01-01",
+        "status": "Published",
+        "images": {
+            "primary": "https://example.com/image.jpg",
+            "gallery": [
+                "https://example.com/gallery1.jpg"
+            ],
+            "local": {
+                "primary": "/images/projects/project-001/primary.jpg",
+                "gallery": [
+                    "/images/projects/project-001/gallery1.jpg"
+                ]
+            }
+        },
+        "links": {
+            "github": "https://github.com/user/project",
+            "demo": "https://project.example.com",
+            "documentation": "https://docs.project.example.com"
+        },
+        "metadata": {
+            "notionId": "abc123-def456-ghi789",
+            "lastUpdated": "2025-07-02T12:00:00Z",
+            "syncedAt": "2025-07-02T12:05:00Z",
+            "version": 1
+        }
+    }
+}
