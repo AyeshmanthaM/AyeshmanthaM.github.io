@@ -492,50 +492,69 @@ export default {
             const uploadedImages = [];
             const projectIdClean = project.id.replace('project-', '');
 
-            // Process primary image
-            if (project.images.primary && !project.images.primary.includes('unsplash.com')) {
+            // Process primary image - Always try to download if there's a valid Notion URL
+            if (project.images.primary && this.isValidImageUrl(project.images.primary)) {
                 try {
+                    console.log(`🔄 Checking primary image for ${project.title}: ${project.images.primary.substring(0, 50)}...`);
+
                     const imageData = await this.downloadImage(project.images.primary);
                     if (imageData) {
                         const imagePath = `public/images/projects/${projectIdClean}/primary.jpg`;
+                        const commitMessage = `Update primary image for ${project.title}`;
+
                         const uploadSuccess = await this.uploadImageToGitHub(
                             owner, repo, branch, imagePath, imageData,
-                            `Add primary image for ${project.title}`, env.GITHUB_TOKEN
+                            commitMessage, env.GITHUB_TOKEN
                         );
 
                         if (uploadSuccess) {
                             uploadedImages.push({
                                 type: 'primary',
                                 path: imagePath,
-                                success: true
+                                success: true,
+                                sourceUrl: project.images.primary
                             });
 
                             // Update project's local image path
                             project.images.local.primary = `/images/projects/${projectIdClean}/primary.jpg`;
+                            console.log(`✅ Primary image updated for ${project.title}`);
+                        } else {
+                            console.error(`❌ Failed to upload primary image for ${project.title}`);
                         }
+                    } else {
+                        console.error(`❌ Failed to download primary image for ${project.title}`);
                     }
                 } catch (error) {
                     console.error(`Error processing primary image for ${project.title}:`, error);
                     uploadedImages.push({
                         type: 'primary',
                         success: false,
-                        error: error.message
+                        error: error.message,
+                        sourceUrl: project.images.primary
                     });
                 }
+            } else {
+                console.log(`⏭️ Skipping primary image for ${project.title} - no valid URL or placeholder image`);
             }
 
-            // Process gallery images
+            // Process gallery images - Always try to download if there are valid Notion URLs
             if (project.images.gallery && project.images.gallery.length > 0) {
+                console.log(`🖼️ Processing ${project.images.gallery.length} gallery images for ${project.title}`);
+
                 for (let i = 0; i < project.images.gallery.length; i++) {
                     const galleryImageUrl = project.images.gallery[i];
-                    if (!galleryImageUrl.includes('unsplash.com')) {
+                    if (this.isValidImageUrl(galleryImageUrl)) {
                         try {
+                            console.log(`🔄 Downloading gallery image ${i + 1} for ${project.title}: ${galleryImageUrl.substring(0, 50)}...`);
+
                             const imageData = await this.downloadImage(galleryImageUrl);
                             if (imageData) {
                                 const imagePath = `public/images/projects/${projectIdClean}/gallery-${i + 1}.jpg`;
+                                const commitMessage = `Update gallery image ${i + 1} for ${project.title}`;
+
                                 const uploadSuccess = await this.uploadImageToGitHub(
                                     owner, repo, branch, imagePath, imageData,
-                                    `Add gallery image ${i + 1} for ${project.title}`, env.GITHUB_TOKEN
+                                    commitMessage, env.GITHUB_TOKEN
                                 );
 
                                 if (uploadSuccess) {
@@ -543,7 +562,8 @@ export default {
                                         type: 'gallery',
                                         index: i + 1,
                                         path: imagePath,
-                                        success: true
+                                        success: true,
+                                        sourceUrl: galleryImageUrl
                                     });
 
                                     // Update project's local gallery paths
@@ -551,7 +571,12 @@ export default {
                                         project.images.local.gallery = [];
                                     }
                                     project.images.local.gallery.push(`/images/projects/${projectIdClean}/gallery-${i + 1}.jpg`);
+                                    console.log(`✅ Gallery image ${i + 1} updated for ${project.title}`);
+                                } else {
+                                    console.error(`❌ Failed to upload gallery image ${i + 1} for ${project.title}`);
                                 }
+                            } else {
+                                console.error(`❌ Failed to download gallery image ${i + 1} for ${project.title}`);
                             }
                         } catch (error) {
                             console.error(`Error processing gallery image ${i + 1} for ${project.title}:`, error);
@@ -559,11 +584,16 @@ export default {
                                 type: 'gallery',
                                 index: i + 1,
                                 success: false,
-                                error: error.message
+                                error: error.message,
+                                sourceUrl: galleryImageUrl
                             });
                         }
+                    } else {
+                        console.log(`⏭️ Skipping gallery image ${i + 1} for ${project.title} - no valid URL or placeholder image`);
                     }
                 }
+            } else {
+                console.log(`📷 No gallery images to process for ${project.title}`);
             }
 
             return {
@@ -585,35 +615,87 @@ export default {
         }
     },
 
-    // Helper: Download image from URL
-    async downloadImage(imageUrl) {
-        try {
-            console.log(`⬇️ Downloading image: ${imageUrl.substring(0, 50)}...`);
+    // Helper: Download image from URL with retry logic
+    async downloadImage(imageUrl, maxRetries = 3) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`⬇️ Downloading image (attempt ${attempt}/${maxRetries}): ${imageUrl.substring(0, 80)}...`);
 
-            const response = await fetch(imageUrl);
-            if (!response.ok) {
-                throw new Error(`Failed to download image: ${response.status}`);
+                // Add timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+                const response = await fetch(imageUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'Cloudflare-Worker-Image-Downloader/1.0'
+                    }
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Check content type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.startsWith('image/')) {
+                    throw new Error(`Invalid content type: ${contentType}. Expected image/*`);
+                }
+
+                const imageBuffer = await response.arrayBuffer();
+
+                if (imageBuffer.byteLength === 0) {
+                    throw new Error('Downloaded image is empty');
+                }
+
+                if (imageBuffer.byteLength > 25 * 1024 * 1024) { // 25MB limit
+                    throw new Error(`Image too large: ${Math.round(imageBuffer.byteLength / 1024 / 1024)}MB. Maximum 25MB allowed`);
+                }
+
+                // Convert to base64 in chunks to avoid stack overflow
+                const base64Image = await this.arrayBufferToBase64(imageBuffer);
+
+                console.log(`✅ Successfully downloaded image (${Math.round(imageBuffer.byteLength / 1024)}KB)`);
+                return base64Image;
+
+            } catch (error) {
+                console.error(`❌ Download attempt ${attempt} failed: ${error.message}`);
+
+                if (attempt === maxRetries) {
+                    console.error(`❌ Failed to download image after ${maxRetries} attempts: ${imageUrl}`);
+                    return null;
+                }
+
+                // Wait before retry (exponential backoff)
+                const waitTime = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+                console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
             }
-
-            const imageBuffer = await response.arrayBuffer();
-            const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-
-            console.log(`✅ Downloaded image (${imageBuffer.byteLength} bytes)`);
-            return base64Image;
-
-        } catch (error) {
-            console.error(`❌ Error downloading image: ${error.message}`);
-            return null;
         }
+
+        return null;
     },
 
-    // Helper: Upload image to GitHub
+    // Helper: Upload image to GitHub with improved error handling
     async uploadImageToGitHub(owner, repo, branch, path, base64Data, message, token) {
         try {
-            console.log(`📤 Uploading image to GitHub: ${path}`);
+            console.log(`📤 Uploading image to GitHub: ${path} (${Math.round(base64Data.length * 0.75 / 1024)}KB)`);
 
-            // Check if image already exists
+            // Validate inputs
+            if (!token || !token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+                throw new Error('Invalid GitHub token format');
+            }
+
+            if (!base64Data || base64Data.length === 0) {
+                throw new Error('Empty image data provided');
+            }
+
+            // Check if image already exists and get SHA
             let sha = null;
+            let isUpdate = false;
+
             try {
                 const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
                     headers: {
@@ -626,15 +708,20 @@ export default {
                 if (getResponse.ok) {
                     const fileData = await getResponse.json();
                     sha = fileData.sha;
-                    console.log(`🔄 Image exists, will update`);
+                    isUpdate = true;
+                    console.log(`🔄 Image exists, will update (SHA: ${sha.substring(0, 8)}...)`);
+                } else if (getResponse.status === 404) {
+                    console.log(`🆕 New image will be created`);
+                } else {
+                    console.warn(`⚠️ Unexpected response when checking file existence: ${getResponse.status}`);
                 }
             } catch (error) {
-                console.log(`🆕 New image will be created`);
+                console.log(`🆕 Assuming new image (check failed: ${error.message})`);
             }
 
-            // Upload or update image
+            // Prepare upload data
             const updateData = {
-                message,
+                message: isUpdate ? `Update ${message}` : `Add ${message}`,
                 content: base64Data,
                 branch
             };
@@ -643,6 +730,7 @@ export default {
                 updateData.sha = sha;
             }
 
+            // Upload or update image
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
                 method: 'PUT',
                 headers: {
@@ -655,11 +743,14 @@ export default {
             });
 
             if (response.ok) {
-                console.log(`✅ Successfully uploaded image: ${path}`);
+                const result = await response.json();
+                const commitSha = result.commit?.sha?.substring(0, 8) || 'unknown';
+                console.log(`✅ Successfully ${isUpdate ? 'updated' : 'created'} image: ${path} (commit: ${commitSha})`);
                 return true;
             } else {
                 const errorText = await response.text();
-                console.error(`❌ Failed to upload image ${path}: ${response.status} - ${errorText}`);
+                console.error(`❌ Failed to upload image ${path}: ${response.status} - ${response.statusText}`);
+                console.error(`Error details: ${errorText.substring(0, 200)}...`);
                 return false;
             }
 
@@ -764,8 +855,11 @@ export default {
                 }))
             };
 
-            // Step 4: Create/update individual project files
-            const updatePromises = projects.map(async (project) => {
+            // Step 4: Create/update individual project files SEQUENTIALLY
+            console.log(`📝 Updating ${projects.length} project files sequentially to avoid conflicts...`);
+            const updateResults = [];
+
+            for (const project of projects) {
                 const filePath = `public/data/projects/${project.id}.json`;
                 const content = JSON.stringify(project, null, 2);
 
@@ -773,25 +867,32 @@ export default {
                     owner, repo, branch, filePath, content,
                     `Update project data for ${project.title}`, env.GITHUB_TOKEN
                 );
-                return { path: filePath, success: result, action: 'updated', project: project.title };
-            });
+                updateResults.push({ path: filePath, success: result, action: 'updated', project: project.title });
 
-            // Step 5: Update metadata file
-            const metadataResult = this.updateGitHubFile(
+                // Longer delay to prevent rate limiting and conflicts
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            // Step 5: Update metadata file AFTER all project files with delay
+            console.log(`📝 Updating metadata file...`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay before metadata
+            const metadataResult = await this.updateGitHubFile(
                 owner, repo, branch, 'public/data/metadata.json',
                 JSON.stringify(metadataContent, null, 2),
                 `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
             );
-            updatePromises.push(metadataResult.then(result => ({
+            updateResults.push({
                 path: 'public/data/metadata.json',
-                success: result,
+                success: metadataResult,
                 action: 'updated',
                 project: 'metadata'
-            })));
+            });
 
-            // Execute all operations
-            const allPromises = [...deletePromises, ...updatePromises];
-            const results = await Promise.all(allPromises);
+            // Execute delete operations (these can be parallel as they don't conflict)
+            const deleteResults = await Promise.all(deletePromises);
+
+            // Combine all results
+            const results = [...deleteResults, ...updateResults];
 
             const successCount = results.filter(r => r.success).length;
             const failedFiles = results.filter(r => !r.success);
@@ -838,10 +939,10 @@ export default {
 
             const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
-            // Get current file SHA (if exists)
+            // Always get fresh SHA right before update to avoid conflicts
             let sha = null;
             try {
-                console.log(`🔍 Checking if file exists: ${path}`);
+                console.log(`🔍 Getting fresh SHA for: ${path}`);
                 const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -853,16 +954,16 @@ export default {
                 if (getResponse.ok) {
                     const fileData = await getResponse.json();
                     sha = fileData.sha;
-                    console.log(`✅ File exists, SHA: ${sha.substring(0, 8)}...`);
+                    console.log(`✅ File exists, using fresh SHA: ${sha.substring(0, 8)}...`);
                 } else if (getResponse.status === 404) {
                     console.log(`ℹ️ File doesn't exist, will create new file`);
                 } else {
-                    console.error(`⚠️ Error checking file existence: ${getResponse.status} - ${getResponse.statusText}`);
+                    console.error(`⚠️ Error getting fresh SHA: ${getResponse.status} - ${getResponse.statusText}`);
                     const errorText = await getResponse.text();
                     console.error('Error details:', errorText);
                 }
             } catch (error) {
-                console.log(`ℹ️ File doesn't exist or error checking: ${error.message}`);
+                console.log(`ℹ️ File doesn't exist or error getting SHA: ${error.message}`);
             }
 
             // Update or create file
@@ -874,7 +975,7 @@ export default {
 
             if (sha) {
                 updateData.sha = sha;
-                console.log(`🔄 Updating existing file`);
+                console.log(`🔄 Updating existing file with fresh SHA`);
             } else {
                 console.log(`🆕 Creating new file`);
             }
@@ -895,6 +996,65 @@ export default {
                 const result = await response.json();
                 console.log(`✅ Successfully updated ${path}, commit SHA: ${result.commit?.sha?.substring(0, 8)}...`);
                 return true;
+            } else if (response.status === 409) {
+                // Handle conflict with one retry using even fresher SHA
+                const errorText = await response.text();
+                console.warn(`⚠️ Conflict detected for ${path}, getting even fresher SHA for retry...`);
+
+                try {
+                    // Wait a moment and get the latest SHA again
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    const refreshResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                        },
+                    });
+
+                    if (refreshResponse.ok) {
+                        const refreshData = await refreshResponse.json();
+                        const newerSha = refreshData.sha;
+                        console.log(`🔄 Retrying with even fresher SHA: ${newerSha.substring(0, 8)}...`);
+
+                        // Retry with the newest SHA
+                        const retryData = {
+                            message: message + ' (retry)',
+                            content: encodedContent,
+                            branch,
+                            sha: newerSha
+                        };
+
+                        const retryResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'Content-Type': 'application/json',
+                                'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                            },
+                            body: JSON.stringify(retryData),
+                        });
+
+                        if (retryResponse.ok) {
+                            const retryResult = await retryResponse.json();
+                            console.log(`✅ Successfully updated ${path} after retry, commit SHA: ${retryResult.commit?.sha?.substring(0, 8)}...`);
+                            return true;
+                        } else {
+                            const retryErrorText = await retryResponse.text();
+                            console.error(`❌ Retry also failed for ${path}: ${retryResponse.status} - ${retryResponse.statusText}`);
+                            console.error(`Retry error details: ${retryErrorText.substring(0, 200)}...`);
+                            return false;
+                        }
+                    } else {
+                        console.error(`❌ Could not get fresh SHA for retry ${path}: ${refreshResponse.status}`);
+                        return false;
+                    }
+                } catch (retryError) {
+                    console.error(`❌ Exception during retry for ${path}:`, retryError);
+                    return false;
+                }
             } else {
                 const errorText = await response.text();
                 console.error(`❌ Failed to update ${path}: ${response.status} - ${response.statusText}`);
@@ -1101,6 +1261,57 @@ export default {
         } catch (error) {
             console.error(`❌ Exception deleting ${path}:`, error);
             return false;
+        }
+    },
+
+    // Helper: Check if image URL is valid and should be downloaded
+    isValidImageUrl(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+
+        // Skip placeholder URLs
+        if (url.includes('unsplash.com') || url.includes('placeholder')) {
+            return false;
+        }
+
+        // Check if it's a valid HTTP/HTTPS URL
+        try {
+            const urlObj = new URL(url);
+            return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+        } catch (error) {
+            return false;
+        }
+    },
+
+    // Helper: Convert ArrayBuffer to Base64 in chunks to avoid stack overflow
+    async arrayBufferToBase64(buffer) {
+        try {
+            const uint8Array = new Uint8Array(buffer);
+            const chunkSize = 1024; // Smaller 1KB chunks to avoid stack overflow
+            let result = '';
+
+            // Process in smaller chunks and avoid String.fromCharCode.apply with large arrays
+            for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                const chunk = uint8Array.subarray(i, i + chunkSize);
+
+                // Convert chunk to string character by character to avoid apply stack overflow
+                let chunkString = '';
+                for (let j = 0; j < chunk.length; j++) {
+                    chunkString += String.fromCharCode(chunk[j]);
+                }
+                result += chunkString;
+
+                // Yield control occasionally to prevent blocking
+                if (i % (chunkSize * 10) === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+            }
+
+            return btoa(result);
+        } catch (error) {
+            console.error('❌ Error converting to base64:', error);
+            throw new Error('Failed to convert image to base64');
         }
     }
 };

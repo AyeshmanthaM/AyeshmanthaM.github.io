@@ -31,7 +31,8 @@ export class PublicDataService {
         });
 
         const projects = await Promise.all(projectPromises);
-        return projects.filter(project => project !== null);
+        const validProjects = projects.filter(project => project !== null);
+        return validProjects;
       }
 
       return [];
@@ -64,7 +65,7 @@ export class PublicDataService {
     try {
       const response = await fetch(`${this.baseUrl}/data/metadata.json`);
       if (!response.ok) {
-        throw new Error('Metadata not found');
+        throw new Error(`Metadata not found: ${response.status} ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {

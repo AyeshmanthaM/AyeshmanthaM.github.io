@@ -12,16 +12,20 @@ const Projects: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize the data service
-  const dataService = new PublicDataService();
-
   // Load projects from public data on component mount
   useEffect(() => {
     const loadProjects = async () => {
       try {
         setLoading(true);
         setError(null);
+
+        const dataService = new PublicDataService();
         const projectsData = await dataService.getProjects();
+
+        if (!projectsData || projectsData.length === 0) {
+          setError('No projects found. Please check if data is available.');
+          return;
+        }
 
         // Transform the data to match our Project interface if needed
         const transformedProjects: Project[] = projectsData.map((project: any) => ({
@@ -34,16 +38,17 @@ const Projects: React.FC = () => {
           category: project.category,
           technologies: project.technologies || [],
           date: project.date,
-          // Use local images first, then fallback to Notion URLs, then placeholder
+          // Use local images first (synced from Notion), then fallback to Notion URLs, then placeholder
           image: project.images?.local?.primary ||
             project.images?.primary ||
-            '/images/placeholder.jpg'
+            'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80'
         }));
 
         setProjects(transformedProjects);
       } catch (err) {
         console.error('Error loading projects:', err);
-        setError('Failed to load projects. Please try again later.');
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        setError(`Failed to load projects: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
