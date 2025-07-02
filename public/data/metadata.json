@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "location": "public/data",
   "purpose": "Portfolio project data stored in public folder",
-  "lastSync": "2025-07-02T19:41:35.550Z",
-  "projectCount": 3,
+  "lastSync": "2025-07-02T19:43:25.342Z",
+  "projectCount": 2,
   "syncHistory": [
     {
-      "timestamp": "2025-07-02T19:41:35.550Z",
-      "projectCount": 3,
+      "timestamp": "2025-07-02T19:43:25.342Z",
+      "projectCount": 2,
       "method": "cloudflare-worker"
     }
   ],
@@ -23,12 +23,6 @@
     "metadata": "metadata.json"
   },
   "projects": [
-    {
-      "id": "project-224e0b952ee78022bd02dcba216907fc",
-      "title": "test1",
-      "category": "software",
-      "filename": "project-224e0b952ee78022bd02dcba216907fc.json"
-    },
     {
       "id": "project-220e0b952ee7802fa033e6a18d2bc723",
       "title": "teset",
