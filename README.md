@@ -13,6 +13,7 @@ Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.ne
 - [Prerequisites](#prerequisites)
 - [Installation & Setup](#installation--setup)
 - [Notion Integration](#notion-integration)
+- [Enhanced Data Synchronization](#enhanced-data-synchronization)
 - [Development](#development)
 - [Building for Production](#building-for-production)
 - [GitHub Pages Deployment](#github-pages-deployment)
@@ -28,6 +29,10 @@ Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.ne
 - **Type Animations**: Dynamic typing effects using React Type Animation
 - **3D Elements**: Three.js integration for interactive visual elements
 - **Notion Integration**: Connect to Notion database for dynamic project management
+- **Enhanced Data Sync**: Automated synchronization between Notion and GitHub data branch
+- **GitHub Data Branch**: Dedicated branch for storing project data and assets
+- **Comprehensive Backup**: Multiple backup strategies for data security
+- **Image Migration**: Automated image migration from Notion to GitHub
 - **Fast Loading**: Optimized with Vite for lightning-fast development and build times
 - **SEO Optimized**: Proper meta tags and semantic HTML structure
 - **Modern UI**: Clean and professional design with Tailwind CSS
@@ -41,7 +46,10 @@ Visit the live website: [https://www.ayeshmantha.net](https://www.ayeshmantha.ne
 - **Routing**: React Router DOM
 - **3D Graphics**: Three.js
 - **Icons**: Lucide React
+- **Backend**: Cloudflare Workers (for API proxy and data sync)
+- **Data Storage**: Notion API + GitHub Data Branch
 - **Deployment**: GitHub Pages
+- **Image Management**: Automated migration and optimization
 
 ## 📦 Prerequisites
 
@@ -357,4 +365,113 @@ This portfolio supports dynamic project management through Notion integration. Y
 
 ### Detailed Setup
 
-For complete setup instructions, see the [Notion Setup Guide](./NOTION_SETUP.md).
+For complete setup instructions, see the [Notion Setup Guide](./NOTION_SETUP.md)
+
+## 🔄 Enhanced Data Synchronization
+
+The portfolio now features an advanced data synchronization system that goes beyond basic Notion integration. This system provides automated backup, GitHub integration, and enhanced data management capabilities.
+
+### 🌟 Key Features
+
+- **GitHub Data Branch**: Dedicated `data` branch for storing project files and assets
+- **Automated Sync**: Trigger synchronization via API endpoints
+- **Comprehensive Backup**: Multiple backup strategies for data security
+- **Image Migration**: Automatic migration from Notion to GitHub
+- **Version Control**: Git history for all data changes
+- **Redundancy**: Multiple storage locations (Notion, GitHub, KV storage)
+
+### 🚀 New API Endpoints
+
+The enhanced system introduces several new endpoints:
+
+- `POST /api/data/sync` - Enhanced data synchronization
+- `POST /api/data/backup` - Comprehensive backup creation
+- `GET /api/data/status` - System status and health check
+- `POST /api/data/migrate` - Image migration from Notion to GitHub
+
+### 📁 Data Branch Structure
+
+```
+data/
+├── README.md                     # Documentation
+├── metadata.json                 # Sync metadata and status
+├── projects/
+│   ├── schema.json              # Data structure schema
+│   ├── project-001.json         # Individual project files
+│   └── project-002.json
+├── images/
+│   ├── project-001/
+│   │   ├── primary.jpg
+│   │   └── gallery1.jpg
+│   └── project-002/
+│       └── primary.jpg
+└── backups/
+    ├── full-backup-2025-07-02.json
+    └── incremental-backup-2025-07-01.json
+```
+
+### ⚙️ Setup Instructions
+
+1. **GitHub Token Setup**
+   - Create a GitHub Personal Access Token with `repo` permissions
+   - Add as Cloudflare Worker secret: `GITHUB_TOKEN`
+
+2. **Deploy Enhanced Worker**
+   ```bash
+   # Use the deployment script
+   ./deploy-enhanced-sync.ps1  # Windows
+   ./deploy-enhanced-sync.sh   # Linux/macOS
+   
+   # Or manually
+   wrangler secret put GITHUB_TOKEN
+   wrangler deploy
+   ```
+
+3. **Test the System**
+   - Open `test-data-sync.html` in your browser
+   - Configure your worker URL and admin token
+   - Test each endpoint to verify functionality
+
+### 🔧 Configuration
+
+The system requires additional environment variables:
+
+```bash
+# Required for enhanced features
+GITHUB_TOKEN=ghp_your_github_token_here
+ADMIN_TOKEN=your_secure_admin_token
+
+# Optional but recommended
+SENDGRID_API_KEY=your_sendgrid_key
+BACKUP_KV=kv_namespace_for_backups
+```
+
+### 📊 Benefits
+
+1. **Performance**: Local data access for faster loading
+2. **Reliability**: Multiple backup locations reduce data loss risk
+3. **Scalability**: GitHub's infrastructure for asset hosting
+4. **Automation**: Reduced manual intervention for data management
+5. **Version Control**: Complete history of all data changes
+6. **Flexibility**: Structured data enables custom implementations
+
+### 📚 Detailed Documentation
+
+For comprehensive setup and usage instructions:
+- [Enhanced Data Sync Setup Guide](./Doc/DATA_SYNC_SETUP.md)
+- [Testing Interface](./test-data-sync.html)
+- [Data Branch](https://github.com/AyeshmanthaM/AyeshmanthaM.github.io/tree/data)
+
+### 🔍 Monitoring and Troubleshooting
+
+Use the status endpoint to monitor system health:
+
+```bash
+curl https://your-worker.workers.dev/api/data/status
+```
+
+The response includes:
+- Last synchronization timestamp
+- GitHub branch status
+- Feature availability
+- Error tracking information
