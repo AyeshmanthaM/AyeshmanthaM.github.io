@@ -303,7 +303,26 @@ export default {
                 }
             }
 
-            // Step 3: Update GitHub public folder (if GitHub token is available)
+            // Step 3: Download and upload images to GitHub (if GitHub token is available)
+            let imageUploadResults = [];
+            if (env.GITHUB_TOKEN) {
+                console.log(`📸 Starting image download and upload process...`);
+                for (const project of projects) {
+                    try {
+                        const imageResult = await this.downloadAndUploadProjectImages(project, env);
+                        imageUploadResults.push(imageResult);
+                    } catch (error) {
+                        console.error(`Error processing images for project ${project.id}:`, error);
+                        imageUploadResults.push({
+                            projectId: project.id,
+                            success: false,
+                            error: error.message
+                        });
+                    }
+                }
+            }
+
+            // Step 4: Update GitHub public folder (if GitHub token is available)
             let githubUpdateResult = null;
             if (env.GITHUB_TOKEN) {
                 githubUpdateResult = await this.updateGitHubPublicFolder(projects, env, syncTimestamp);
@@ -316,6 +335,8 @@ export default {
                     projectCount: projects.length,
                     syncTimestamp,
                     githubUpdated: githubUpdateResult?.success || false,
+                    imagesProcessed: imageUploadResults.length,
+                    imageResults: imageUploadResults,
                     projects: projects.map(p => ({
                         id: p.id,
                         title: p.title,
@@ -459,6 +480,195 @@ export default {
         }
     },
 
+    // Helper: Download and upload project images to GitHub
+    async downloadAndUploadProjectImages(project, env) {
+        try {
+            const owner = 'AyeshmanthaM';
+            const repo = 'AyeshmanthaM.github.io';
+            const branch = 'gh-pages';
+
+            console.log(`📸 Processing images for project: ${project.title}`);
+
+            const uploadedImages = [];
+            const projectIdClean = project.id.replace('project-', '');
+
+            // Process primary image
+            if (project.images.primary && !project.images.primary.includes('unsplash.com')) {
+                try {
+                    const imageData = await this.downloadImage(project.images.primary);
+                    if (imageData) {
+                        const imagePath = `public/images/projects/${projectIdClean}/primary.jpg`;
+                        const uploadSuccess = await this.uploadImageToGitHub(
+                            owner, repo, branch, imagePath, imageData,
+                            `Add primary image for ${project.title}`, env.GITHUB_TOKEN
+                        );
+
+                        if (uploadSuccess) {
+                            uploadedImages.push({
+                                type: 'primary',
+                                path: imagePath,
+                                success: true
+                            });
+
+                            // Update project's local image path
+                            project.images.local.primary = `/images/projects/${projectIdClean}/primary.jpg`;
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error processing primary image for ${project.title}:`, error);
+                    uploadedImages.push({
+                        type: 'primary',
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+
+            // Process gallery images
+            if (project.images.gallery && project.images.gallery.length > 0) {
+                for (let i = 0; i < project.images.gallery.length; i++) {
+                    const galleryImageUrl = project.images.gallery[i];
+                    if (!galleryImageUrl.includes('unsplash.com')) {
+                        try {
+                            const imageData = await this.downloadImage(galleryImageUrl);
+                            if (imageData) {
+                                const imagePath = `public/images/projects/${projectIdClean}/gallery-${i + 1}.jpg`;
+                                const uploadSuccess = await this.uploadImageToGitHub(
+                                    owner, repo, branch, imagePath, imageData,
+                                    `Add gallery image ${i + 1} for ${project.title}`, env.GITHUB_TOKEN
+                                );
+
+                                if (uploadSuccess) {
+                                    uploadedImages.push({
+                                        type: 'gallery',
+                                        index: i + 1,
+                                        path: imagePath,
+                                        success: true
+                                    });
+
+                                    // Update project's local gallery paths
+                                    if (!project.images.local.gallery) {
+                                        project.images.local.gallery = [];
+                                    }
+                                    project.images.local.gallery.push(`/images/projects/${projectIdClean}/gallery-${i + 1}.jpg`);
+                                }
+                            }
+                        } catch (error) {
+                            console.error(`Error processing gallery image ${i + 1} for ${project.title}:`, error);
+                            uploadedImages.push({
+                                type: 'gallery',
+                                index: i + 1,
+                                success: false,
+                                error: error.message
+                            });
+                        }
+                    }
+                }
+            }
+
+            return {
+                projectId: project.id,
+                projectTitle: project.title,
+                success: true,
+                uploadedImages: uploadedImages,
+                totalImages: uploadedImages.length,
+                successfulUploads: uploadedImages.filter(img => img.success).length
+            };
+
+        } catch (error) {
+            console.error(`Error in downloadAndUploadProjectImages for ${project.id}:`, error);
+            return {
+                projectId: project.id,
+                success: false,
+                error: error.message
+            };
+        }
+    },
+
+    // Helper: Download image from URL
+    async downloadImage(imageUrl) {
+        try {
+            console.log(`⬇️ Downloading image: ${imageUrl.substring(0, 50)}...`);
+
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+                throw new Error(`Failed to download image: ${response.status}`);
+            }
+
+            const imageBuffer = await response.arrayBuffer();
+            const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+
+            console.log(`✅ Downloaded image (${imageBuffer.byteLength} bytes)`);
+            return base64Image;
+
+        } catch (error) {
+            console.error(`❌ Error downloading image: ${error.message}`);
+            return null;
+        }
+    },
+
+    // Helper: Upload image to GitHub
+    async uploadImageToGitHub(owner, repo, branch, path, base64Data, message, token) {
+        try {
+            console.log(`📤 Uploading image to GitHub: ${path}`);
+
+            // Check if image already exists
+            let sha = null;
+            try {
+                const getResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                    },
+                });
+
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                    console.log(`🔄 Image exists, will update`);
+                }
+            } catch (error) {
+                console.log(`🆕 New image will be created`);
+            }
+
+            // Upload or update image
+            const updateData = {
+                message,
+                content: base64Data,
+                branch
+            };
+
+            if (sha) {
+                updateData.sha = sha;
+            }
+
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Cloudflare-Worker-Notion-Sync'
+                },
+                body: JSON.stringify(updateData),
+            });
+
+            if (response.ok) {
+                console.log(`✅ Successfully uploaded image: ${path}`);
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error(`❌ Failed to upload image ${path}: ${response.status} - ${errorText}`);
+                return false;
+            }
+
+        } catch (error) {
+            console.error(`❌ Exception uploading image ${path}:`, error);
+            return false;
+        }
+    },
+
     // Helper: Extract gallery images from Notion properties
     extractGalleryImages(properties) {
         const galleryImages = [];
@@ -496,7 +706,7 @@ export default {
         try {
             const owner = 'AyeshmanthaM';
             const repo = 'AyeshmanthaM.github.io';
-            const branch = 'main';
+            const branch = 'gh-pages';
 
             console.log(`🔄 Starting GitHub update for ${projects.length} projects to ${owner}/${repo}:${branch}`);
 
@@ -712,7 +922,7 @@ export default {
         try {
             const owner = 'AyeshmanthaM';
             const repo = 'AyeshmanthaM.github.io';
-            const branch = 'main';
+            const branch = 'gh-pages';
 
             // Check if public/data/metadata.json exists
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/public/data/metadata.json?ref=${branch}`, {

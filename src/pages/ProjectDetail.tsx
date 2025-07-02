@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Tag, Database, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Tag, AlertCircle } from 'lucide-react';
 import { getCategoryColorClasses, getCardClasses } from '../theme/colors';
-import { fetchProjectById, fetchNotionPageContent, convertNotionBlocksToText } from '../services/notionService';
-import { projects as fallbackProjects } from '../data/projects';
+import { PublicDataService } from '../services/publicDataService';
 import { Project } from '../types';
 
 const ProjectDetail: React.FC = () => {
@@ -12,48 +11,45 @@ const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [notionContent, setNotionContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isNotionConnected, setIsNotionConnected] = useState(false);
 
-  // Direct function to load project details
+  // Initialize the data service
+  const dataService = new PublicDataService();
+
+  // Load project details from public data
   const loadProjectDetail = async (projectId: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Try to fetch from Notion first
-      const notionProject = await fetchProjectById(projectId);
+      // Try to get the specific project file
+      const projectData = await dataService.getProject(`project-${projectId}`);
 
-      if (notionProject) {
-        setProject(notionProject);
-        setIsNotionConnected(true);
+      if (projectData) {
+        // Transform the data to match our Project interface
+        const transformedProject: Project = {
+          id: projectData.id.replace('project-', ''),
+          title: projectData.title,
+          description: projectData.description,
+          fullDescription: projectData.fullDescription || projectData.description,
+          challenges: projectData.challenges || 'Details available in full description',
+          results: projectData.results || 'Project completed successfully',
+          category: projectData.category,
+          technologies: projectData.technologies || [],
+          date: projectData.date,
+          image: projectData.images?.local?.primary ||
+            projectData.images?.primary ||
+            '/images/placeholder.jpg'
+        };
 
-        // Try to fetch Notion page content
-        try {
-          const blocks = await fetchNotionPageContent(projectId);
-          const content = convertNotionBlocksToText(blocks);
-          setNotionContent(content);
-        } catch (contentError) {
-          console.warn('Failed to fetch Notion content:', contentError);
-          setNotionContent('');
-        }
+        setProject(transformedProject);
       } else {
-        // Fallback to static data
-        const fallbackProject = fallbackProjects.find(p => p.id === projectId);
-        setProject(fallbackProject || null);
-        setIsNotionConnected(false);
-        setNotionContent('');
+        setError('Project not found');
       }
     } catch (err) {
-      console.error('Failed to load project:', err);
-      setError('Failed to load project details');
-
-      // Try fallback data
-      const fallbackProject = fallbackProjects.find(p => p.id === projectId);
-      setProject(fallbackProject || null);
-      setIsNotionConnected(false);
+      console.error('Error loading project:', err);
+      setError('Failed to load project details. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -79,12 +75,15 @@ const ProjectDetail: React.FC = () => {
       <div className="pt-24 pb-16 min-h-screen">
         <div className="container mx-auto px-4 md:px-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-8"></div>
-            <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
+            <div className="flex items-center gap-4 mb-8">
+              <div className="bg-gray-200 dark:bg-gray-700 h-10 w-32 rounded"></div>
+            </div>
+            <div className="bg-gray-200 dark:bg-gray-700 h-8 w-3/4 rounded mb-4"></div>
+            <div className="bg-gray-200 dark:bg-gray-700 h-64 rounded-lg mb-8"></div>
             <div className="space-y-4">
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+              <div className="bg-gray-200 dark:bg-gray-700 h-4 rounded"></div>
+              <div className="bg-gray-200 dark:bg-gray-700 h-4 rounded w-5/6"></div>
+              <div className="bg-gray-200 dark:bg-gray-700 h-4 rounded w-4/6"></div>
             </div>
           </div>
         </div>
@@ -92,96 +91,198 @@ const ProjectDetail: React.FC = () => {
     );
   }
 
-  if (!project) return null;
+  if (error) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center py-20">
+            <AlertCircle size={64} className="mx-auto mb-4 text-red-500" />
+            <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+              Project Not Found
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              {error}
+            </p>
+            <Link
+              to="/projects"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <ArrowLeft size={20} className="mr-2" />
+              Back to Projects
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="pt-24 pb-16 min-h-screen">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center py-20">
+            <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+              Project Not Found
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              The requested project could not be found.
+            </p>
+            <Link
+              to="/projects"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <ArrowLeft size={20} className="mr-2" />
+              Back to Projects
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const categoryColors = getCategoryColorClasses(project.category);
+  const cardClasses = getCardClasses();
 
   return (
-    <div className="pt-24 pb-16">
+    <div className="pt-24 pb-16 min-h-screen">
       <div className="container mx-auto px-4 md:px-6">
-        <Link
-          to="/projects"
-          className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline mb-8"
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <ArrowLeft size={16} className="mr-2" /> Back to Projects
-        </Link>
+          <Link
+            to="/projects"
+            className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline mb-8"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            Back to Projects
+          </Link>
+        </motion.div>
 
+        {/* Project Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12"
         >
-          <div className={`${getCardClasses()} shadow-xl overflow-hidden`}>
-            <div className="h-80 overflow-hidden">
-              <img
-                src={project.image}
-                alt={project.title}
-                className="w-full h-full object-cover object-center"
-              />
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${categoryColors}`}>
+              <Tag size={14} className="inline mr-1" />
+              {project.category}
+            </span>
+            <span className="text-gray-600 dark:text-gray-400 flex items-center">
+              <Calendar size={14} className="mr-1" />
+              {project.date}
+            </span>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+            {project.title}
+          </h1>
+
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+            {project.description}
+          </p>
+
+          {/* Technologies */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {project.technologies.map((tech) => (
+              <span
+                key={tech}
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Project Image */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-12"
+        >
+          <img
+            src={project.image}
+            alt={project.title}
+            className="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
+            }}
+          />
+        </motion.div>
+
+        {/* Project Content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-12"
+        >
+          <div className="lg:col-span-2">
+            <div className={`${cardClasses} p-8`}>
+              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+                Project Overview
+              </h2>
+              <div className="prose dark:prose-invert max-w-none">
+                {/* Render full description with basic markdown-like formatting */}
+                {project.fullDescription.split('\n').map((paragraph, index) => {
+                  if (paragraph.trim() === '') return null;
+
+                  // Simple heading detection
+                  if (paragraph.startsWith('# ')) {
+                    return (
+                      <h3 key={index} className="text-xl font-semibold mt-6 mb-4 text-gray-900 dark:text-gray-100">
+                        {paragraph.replace('# ', '')}
+                      </h3>
+                    );
+                  }
+
+                  if (paragraph.startsWith('## ')) {
+                    return (
+                      <h4 key={index} className="text-lg font-semibold mt-4 mb-3 text-gray-900 dark:text-gray-100">
+                        {paragraph.replace('## ', '')}
+                      </h4>
+                    );
+                  }
+
+                  return (
+                    <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {paragraph}
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {/* Challenges */}
+            <div className={cardClasses}>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  Challenges
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {project.challenges}
+                </p>
+              </div>
             </div>
 
-            <div className="p-8">
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColorClasses(project.category)}`}>
-                  {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
-                </span>
-
-                <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                  <Calendar size={14} className="mr-1" />
-                  <span>{project.date}</span>
-                </div>
-              </div>
-
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">{project.title}</h1>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {project.technologies.map((tech, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                  >
-                    <Tag size={12} className="mr-1" />
-                    {tech}
-                  </span>
-                ))}
-              </div>
-
-              {/* Notion Content Status */}
-              <div className="mb-6 flex items-center gap-2">
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isNotionConnected
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                  }`}>
-                  <Database size={14} />
-                  {isNotionConnected ? 'Content from Notion' : 'Using fallback content'}
-                </div>
-                {error && (
-                  <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    <AlertCircle size={14} />
-                    Error loading content
-                  </div>
-                )}
-              </div>
-
-              <div className="prose dark:prose-invert max-w-none mb-8">
-                <p className="text-lg mb-6">{project.description}</p>
-
-                {/* Display Notion content if available, otherwise fallback content */}
-                {notionContent ? (
-                  <div className="notion-content">
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Project Details</h2>
-                    <div className="whitespace-pre-line">{notionContent}</div>
-                  </div>
-                ) : (
-                  <>
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Project Overview</h2>
-                    <p>{project.fullDescription}</p>
-
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Challenges & Solutions</h2>
-                    <p>{project.challenges}</p>
-
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Results</h2>
-                    <p>{project.results}</p>
-                  </>
-                )}
+            {/* Results */}
+            <div className={cardClasses}>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  Results
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {project.results}
+                </p>
               </div>
             </div>
           </div>

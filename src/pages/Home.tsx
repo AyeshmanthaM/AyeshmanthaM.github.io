@@ -1,13 +1,56 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Cpu, BrainCircuit as Circuit, Layers, Zap, Code, Wrench } from 'lucide-react';
 import ProjectCard from '../components/ProjectCard';
-import { featuredProjects } from '../data/projects';
+import { PublicDataService } from '../services/publicDataService';
+import { Project } from '../types';
 import { getPrimaryButtonClasses } from '../theme/colors';
 import { TypeAnimation } from 'react-type-animation';
 
 const Home: React.FC = () => {
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+
+  // Initialize the data service
+  const dataService = new PublicDataService();
+
+  // Load featured projects from public data
+  useEffect(() => {
+    const loadFeaturedProjects = async () => {
+      try {
+        setLoadingProjects(true);
+        const projectsData = await dataService.getProjects();
+
+        // Transform and get first 3 projects as featured
+        const transformedProjects: Project[] = projectsData.slice(0, 3).map((project: any) => ({
+          id: project.id.replace('project-', ''),
+          title: project.title,
+          description: project.description,
+          fullDescription: project.fullDescription || project.description,
+          challenges: project.challenges || 'Details available in full description',
+          results: project.results || 'Project completed successfully',
+          category: project.category,
+          technologies: project.technologies || [],
+          date: project.date,
+          image: project.images?.local?.primary ||
+            project.images?.primary ||
+            '/images/placeholder.jpg'
+        }));
+
+        setFeaturedProjects(transformedProjects);
+      } catch (err) {
+        console.error('Error loading featured projects:', err);
+        // Keep empty array as fallback
+        setFeaturedProjects([]);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+
+    loadFeaturedProjects();
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -251,9 +294,27 @@ const Home: React.FC = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
-            ))}
+            {loadingProjects ? (
+              // Loading state for featured projects
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded-lg mb-4"></div>
+                  <div className="bg-gray-200 dark:bg-gray-700 h-4 rounded w-3/4 mb-2"></div>
+                  <div className="bg-gray-200 dark:bg-gray-700 h-3 rounded w-full mb-2"></div>
+                  <div className="bg-gray-200 dark:bg-gray-700 h-3 rounded w-2/3"></div>
+                </div>
+              ))
+            ) : featuredProjects.length > 0 ? (
+              featuredProjects.map((project, index) => (
+                <ProjectCard key={project.id} project={project} index={index} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Featured projects will appear here once data is synced.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>

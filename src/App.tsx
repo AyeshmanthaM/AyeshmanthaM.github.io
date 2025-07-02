@@ -9,6 +9,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import Skills from './pages/Skills';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import NotionSync from './pages/NotionSync';
 import Maintenance from './pages/Maintenance';
 import AnimatedBackground from './components/ui/AnimatedBackground';
 
@@ -50,6 +51,7 @@ function App() {
               <Route path="/skills" element={<Skills />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/notion" element={<NotionSync />} />
               <Route path="/maintenance" element={<Maintenance />} />
             </Routes>
           </main>

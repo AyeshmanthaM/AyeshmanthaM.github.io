@@ -1,88 +1,65 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectCard from '../components/ProjectCard';
 import { Button, Input } from '../components/ui/OnceUI';
-import { fetchProjectsFromNotion, checkNotionConnection } from '../services/notionService';
-import { projects as fallbackProjects } from '../data/projects';
+import { PublicDataService } from '../services/publicDataService';
 import { Project } from '../types';
-import { RefreshCw, Database, AlertCircle } from 'lucide-react';
 
 const Projects: React.FC = () => {
-  //----------- Switch to control data source: true for Notion, false for fallback data ------------------------
-  const [useNotionService, setUseNotionService] = useState<boolean>(false);
-
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [projects, setProjects] = useState<Project[]>(fallbackProjects);
-  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isNotionConnected, setIsNotionConnected] = useState(false);
 
-  // Direct function to check Notion connection
-  const checkConnection = async () => {
-    try {
-      const connected = await checkNotionConnection();
-      setIsNotionConnected(connected);
-      return connected;
-    } catch (err) {
-      console.error('Connection check failed:', err);
-      setIsNotionConnected(false);
-      return false;
-    }
-  };
+  // Initialize the data service
+  const dataService = new PublicDataService();
 
-  // Direct function to fetch projects
-  const loadProjects = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Load projects from public data on component mount
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const projectsData = await dataService.getProjects();
 
-    try {
-      if (useNotionService) {
-        // Check connection first
-        const connected = await checkConnection();
+        // Transform the data to match our Project interface if needed
+        const transformedProjects: Project[] = projectsData.map((project: any) => ({
+          id: project.id.replace('project-', ''), // Remove 'project-' prefix for consistency
+          title: project.title,
+          description: project.description,
+          fullDescription: project.fullDescription || project.description,
+          challenges: project.challenges || 'Details available in full description',
+          results: project.results || 'Project completed successfully',
+          category: project.category,
+          technologies: project.technologies || [],
+          date: project.date,
+          // Use local images first, then fallback to Notion URLs, then placeholder
+          image: project.images?.local?.primary ||
+            project.images?.primary ||
+            '/images/placeholder.jpg'
+        }));
 
-        if (connected) {
-          const notionProjects = await fetchProjectsFromNotion();
-          setProjects(notionProjects);
-        } else {
-          console.info('Notion connection failed, using fallback projects data');
-          setProjects(fallbackProjects);
-        }
-      } else {
-        console.info('Using fallback projects data (Notion service disabled)');
-        setProjects(fallbackProjects);
-        setIsNotionConnected(false);
+        setProjects(transformedProjects);
+      } catch (err) {
+        console.error('Error loading projects:', err);
+        setError('Failed to load projects. Please try again later.');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to load projects:', err);
-      setError('Failed to load projects. Using fallback data.');
-      setProjects(fallbackProjects);
-    } finally {
-      setLoading(false);
-    }
-  }, [useNotionService]);
+    };
 
-  // Load projects on component mount
-  useEffect(() => {
     loadProjects();
-  }, [loadProjects]);
-
-  // Reload projects when useNotionService changes
-  useEffect(() => {
-    loadProjects();
-  }, [useNotionService, loadProjects]);
-
-  // Manual refresh function
-  const refreshProjects = async () => {
-    await loadProjects();
-  };
+  }, []);
 
   const categories = [
     { id: 'all', name: 'All Projects' },
+    { id: 'automation', name: 'Automation' },
+    { id: 'web', name: 'Web Development' },
+    { id: 'software', name: 'Software' },
     { id: 'embedded', name: 'Embedded Systems' },
     { id: 'mechatronics', name: 'Mechatronics' },
     { id: 'interactive', name: 'Interactive' },
-    { id: 'automation', name: 'Automation' },
     { id: 'iot', name: 'IoT' },
     { id: 'other', name: 'Other' },
   ];
@@ -121,60 +98,6 @@ const Projects: React.FC = () => {
             Explore my portfolio of embedded systems, mechatronics, and interactive multimedia projects
             that showcase innovation in engineering and technology.
           </motion.p>
-
-          {/* Notion Connection Status and Controls */}
-          <motion.div
-            className="mt-6 flex items-center justify-center gap-4 flex-wrap"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isNotionConnected && useNotionService
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-              }`}>
-              <Database size={14} />
-              {useNotionService
-                ? (isNotionConnected ? 'Connected to Notion' : 'Notion unavailable - using fallback')
-                : 'Using local data'
-              }
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setUseNotionService(!useNotionService)}
-              className="text-xs"
-            >
-              {useNotionService ? 'Switch to Local Data' : 'Switch to Notion'}
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refreshProjects}
-              disabled={loading}
-              className="p-1"
-            >
-              <RefreshCw
-                size={14}
-                className={loading ? 'animate-spin' : ''}
-              />
-            </Button>
-          </motion.div>
-
-          {/* Error Message */}
-          {error && (
-            <motion.div
-              className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg max-w-md mx-auto"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <AlertCircle size={16} />
-              <span className="text-sm">{error}</span>
-            </motion.div>
-          )}
         </motion.div>
 
         <motion.div
@@ -220,78 +143,107 @@ const Projects: React.FC = () => {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-20"
+          >
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
+              Loading Projects
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Fetching the latest project data...
+            </p>
+          </motion.div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-20"
+          >
+            <div className="once-ui-card max-w-md mx-auto p-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <div className="text-6xl mb-4">⚠️</div>
+              <h3 className="text-xl font-semibold mb-2 text-red-900 dark:text-red-100">
+                Failed to Load Projects
+              </h3>
+              <p className="text-red-700 dark:text-red-300 mb-6">
+                {error}
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {[...Array(6)].map((_, index) => (
+          {!loading && !error && (
+            <>
+              {filteredProjects.length > 0 ? (
                 <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="once-ui-card h-80 animate-pulse bg-gray-200 dark:bg-gray-800"
-                />
-              ))}
-            </motion.div>
-          ) : filteredProjects.length > 0 ? (
-            <motion.div
-              key="projects"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {filteredProjects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.6,
-                    delay: index * 0.1,
-                    ease: 'easeOut'
-                  }}
+                  key="projects"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                 >
-                  <ProjectCard project={project} index={index} />
+                  {filteredProjects.map((project, index) => (
+                    <motion.div
+                      key={project.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.6,
+                        delay: index * 0.1,
+                        ease: 'easeOut'
+                      }}
+                    >
+                      <ProjectCard project={project} index={index} />
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="no-results"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.4 }}
-              className="text-center py-20"
-            >
-              <div className="once-ui-card max-w-md mx-auto p-8">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
-                  No projects found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  No projects match your current search criteria.
-                </p>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setFilter('all');
-                    setSearchQuery('');
-                  }}
+              ) : (
+                <motion.div
+                  key="no-results"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-center py-20"
                 >
-                  Clear filters
-                </Button>
-              </div>
-            </motion.div>
+                  <div className="once-ui-card max-w-md mx-auto p-8">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                      No projects found
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                      No projects match your current search criteria.
+                    </p>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setFilter('all');
+                        setSearchQuery('');
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </>
           )}
         </AnimatePresence>
       </div>

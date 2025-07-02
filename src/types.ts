@@ -1,4 +1,4 @@
-export type ProjectCategory = 'embedded' | 'mechatronics' | 'interactive' | 'automation' | 'iot' | 'Web' |'other';
+export type ProjectCategory = 'embedded' | 'mechatronics' | 'interactive' | 'automation' | 'iot' | 'web' | 'software' | 'other';
 
 export interface Project {
   id: string;

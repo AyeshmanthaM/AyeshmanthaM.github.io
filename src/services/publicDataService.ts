@@ -1,4 +1,5 @@
 // Service for accessing data from the public folder
+// This service is designed for future use when project data and images are synced to the public folder
 export class PublicDataService {
   private baseUrl: string;
 
@@ -31,16 +32,6 @@ export class PublicDataService {
 
         const projects = await Promise.all(projectPromises);
         return projects.filter(project => project !== null);
-      }
-
-      // Fallback to API if public data is not available
-      try {
-        const response = await fetch(`${this.baseUrl}/api/projects`);
-        if (response.ok) {
-          return await response.json();
-        }
-      } catch (apiError) {
-        console.warn('API fallback also failed:', apiError);
       }
 
       return [];
@@ -87,9 +78,8 @@ export class PublicDataService {
    */
   async listProjects(): Promise<string[]> {
     try {
-      // In a real implementation, metadata would contain project IDs
-      // For now, we'll return an empty array since we don't have a way to discover project IDs
-      return [];
+      const metadata = await this.getMetadata();
+      return metadata.projects ? metadata.projects.map((p: any) => p.id) : [];
     } catch (error) {
       console.error('Error listing projects:', error);
       return [];
