@@ -48,7 +48,7 @@ Write-Host "- NOTION_TOKEN: Your Notion integration token"
 Write-Host "- NOTION_DATABASE_ID: Your Notion database ID"
 Write-Host ""
 Write-Host "Optional (but recommended):" -ForegroundColor Yellow
-Write-Host "- GITHUB_TOKEN: GitHub Personal Access Token for data branch"
+Write-Host "- GITHUB_TOKEN: GitHub Personal Access Token for public folder updates"
 Write-Host "- ADMIN_TOKEN: Admin authentication token"
 Write-Host "- SENDGRID_API_KEY: For email functionality"
 Write-Host ""
@@ -65,7 +65,7 @@ if ($setupSecrets -eq "y" -or $setupSecrets -eq "Y") {
     Write-Host "Setting up Notion database ID..."
     wrangler secret put NOTION_DATABASE_ID
     
-    $hasGithub = Read-Host "Do you have a GitHub token for data branch integration? (y/n)"
+    $hasGithub = Read-Host "Do you have a GitHub token for public folder updates? (y/n)"
     if ($hasGithub -eq "y" -or $hasGithub -eq "Y") {
         Write-Host "Setting up GitHub token..."
         wrangler secret put GITHUB_TOKEN
@@ -132,14 +132,14 @@ if ($deployNow -eq "y" -or $deployNow -eq "Y") {
         Write-Host "Your enhanced data synchronization system is now live!" -ForegroundColor Green
         Write-Host ""
         Write-Host "New endpoints available:" -ForegroundColor Yellow
-        Write-Host "- /api/data/sync - Enhanced data synchronization"
-        Write-Host "- /api/data/backup - Comprehensive backup"
+        Write-Host "- /api/data/sync - Enhanced data synchronization to public folder"
+        Write-Host "- /api/data/backup - Comprehensive backup to public folder"
         Write-Host "- /api/data/status - System status"
-        Write-Host "- /api/data/migrate - Image migration"
+        Write-Host "- /api/data/migrate - Image migration to public folder"
         Write-Host ""
         Write-Host "📋 Next steps:" -ForegroundColor Yellow
         Write-Host "1. Test endpoints using the test-data-sync.html file"
-        Write-Host "2. Set up GitHub data branch (already created)"
+        Write-Host "2. Check public/data/ folder for synchronized data"
         Write-Host "3. Configure automated sync triggers"
         Write-Host "4. Review Doc/DATA_SYNC_SETUP.md for detailed instructions"
     } else {

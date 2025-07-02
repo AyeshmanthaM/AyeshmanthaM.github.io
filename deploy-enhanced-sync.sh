@@ -45,7 +45,7 @@ echo "- NOTION_TOKEN: Your Notion integration token"
 echo "- NOTION_DATABASE_ID: Your Notion database ID"
 echo ""
 echo "Optional (but recommended):"
-echo "- GITHUB_TOKEN: GitHub Personal Access Token for data branch"
+echo "- GITHUB_TOKEN: GitHub Personal Access Token for public folder updates"
 echo "- ADMIN_TOKEN: Admin authentication token"
 echo "- SENDGRID_API_KEY: For email functionality"
 echo ""
@@ -62,7 +62,7 @@ if [ "$setup_secrets" = "y" ] || [ "$setup_secrets" = "Y" ]; then
     echo "Enter your Notion database ID:"
     wrangler secret put NOTION_DATABASE_ID
     
-    read -p "Do you have a GitHub token for data branch integration? (y/n): " has_github
+    read -p "Do you have a GitHub token for public folder updates? (y/n): " has_github
     if [ "$has_github" = "y" ] || [ "$has_github" = "Y" ]; then
         echo "Enter your GitHub token:"
         wrangler secret put GITHUB_TOKEN
@@ -127,14 +127,14 @@ if [ "$deploy_now" = "y" ] || [ "$deploy_now" = "Y" ]; then
         echo "Your enhanced data synchronization system is now live!"
         echo ""
         echo "New endpoints available:"
-        echo "- /api/data/sync - Enhanced data synchronization"
-        echo "- /api/data/backup - Comprehensive backup"
+        echo "- /api/data/sync - Enhanced data synchronization to public folder"
+        echo "- /api/data/backup - Comprehensive backup to public folder"
         echo "- /api/data/status - System status"
-        echo "- /api/data/migrate - Image migration"
+        echo "- /api/data/migrate - Image migration to public folder"
         echo ""
         echo "📋 Next steps:"
         echo "1. Test endpoints using the test-data-sync.html file"
-        echo "2. Set up GitHub data branch (already created)"
+        echo "2. Check public/data/ folder for synchronized data"
         echo "3. Configure automated sync triggers"
         echo "4. Review Doc/DATA_SYNC_SETUP.md for detailed instructions"
     else
