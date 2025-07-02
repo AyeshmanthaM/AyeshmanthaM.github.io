@@ -32,7 +32,7 @@
         "id": "project-001",
         "title": "Example Project",
         "description": "A sample project showcasing the data structure",
-        "fullDescription": "This is a comprehensive example of how project data is structured in the public data folder.",
+        "fullDescription": "This is a comprehensive example of how project data is structured in the GitHub data branch.",
         "category": "web",
         "technologies": [
             "React",
@@ -47,9 +47,9 @@
                 "https://example.com/gallery1.jpg"
             ],
             "local": {
-                "primary": "/images/projects/project-001/primary.jpg",
+                "primary": "images/project-001/primary.jpg",
                 "gallery": [
-                    "/images/projects/project-001/gallery1.jpg"
+                    "images/project-001/gallery1.jpg"
                 ]
             }
         },

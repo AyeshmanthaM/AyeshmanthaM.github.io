@@ -13,9 +13,5 @@ compatibility_date = "2024-01-01"
 # Admin authentication
 # wrangler secret put ADMIN_TOKEN
 
-# Enhanced GitHub integration (NEW)
+# Enhanced GitHub integration
 # wrangler secret put GITHUB_TOKEN
-
-# Optional: KV storage for backups
-# wrangler kv:namespace create BACKUP_KV
-# wrangler kv:namespace create BACKUP_KV --preview

@@ -13,7 +13,7 @@ export class PublicDataService {
     try {
       // First try to get the metadata to see available projects
       const metadata = await this.getMetadata();
-      const projects = [];
+      const projects: any[] = [];
 
       // If we have project count in metadata, try to fetch individual project files
       if (metadata.projectCount > 0) {
@@ -69,9 +69,8 @@ export class PublicDataService {
    */
   async listProjects(): Promise<string[]> {
     try {
-      const metadata = await this.getMetadata();
       // In a real implementation, metadata would contain project IDs
-      // For now, we'll return an empty array
+      // For now, we'll return an empty array since we don't have a way to discover project IDs
       return [];
     } catch (error) {
       console.error('Error listing projects:', error);

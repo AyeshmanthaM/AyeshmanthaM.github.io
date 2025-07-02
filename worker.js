@@ -1,4 +1,4 @@
-// Cloudflare Worker for Notion API Proxy and Admin Features
+// Cloudflare Worker for Notion API Proxy
 export default {
     async fetch(request, env, ctx) {
         // Handle CORS preflight requests
@@ -25,48 +25,10 @@ export default {
         };
 
         try {
-            // Admin authentication check
-            const isAdminRequest = path.startsWith('/api/admin') || path.includes('/send-email') || path.includes('/backup');
-            if (isAdminRequest && !this.isAuthorized(request, env)) {
-                return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-                    status: 401,
-                    headers: corsHeaders,
-                });
-            }
 
-            // Route: POST /api/send-email - Send email via SendGrid/Mailgun
-            if (path === '/api/send-email' && request.method === 'POST') {
-                return await this.handleSendEmail(request, env, corsHeaders);
-            }
-
-            // Route: POST /api/notion/backup - Create Notion backup
-            if (path === '/api/notion/backup' && request.method === 'POST') {
-                return await this.handleNotionBackup(request, env, corsHeaders);
-            }
-
-            // Route: GET /api/notion/backup-history - Get backup history
-            if (path === '/api/notion/backup-history' && request.method === 'GET') {
-                return await this.handleBackupHistory(request, env, corsHeaders);
-            }
-
-            // Route: POST /api/notion/restore - Restore from backup
-            if (path === '/api/notion/restore' && request.method === 'POST') {
-                return await this.handleRestoreBackup(request, env, corsHeaders);
-            }
-
-            // Route: POST /api/notion/sync - Sync with Notion
-            if (path === '/api/notion/sync' && request.method === 'POST') {
-                return await this.handleNotionSync(request, env, corsHeaders);
-            }
-
-            // Route: POST /api/data/sync - Enhanced sync with GitHub data branch
+            // Route: POST /api/data/sync - Enhanced sync with public folder
             if (path === '/api/data/sync' && request.method === 'POST') {
                 return await this.handleDataSync(request, env, corsHeaders);
-            }
-
-            // Route: POST /api/data/backup - Create comprehensive backup to GitHub
-            if (path === '/api/data/backup' && request.method === 'POST') {
-                return await this.handleDataBackup(request, env, corsHeaders);
             }
 
             // Route: GET /api/data/status - Get synchronization status
@@ -74,7 +36,7 @@ export default {
                 return await this.handleDataStatus(request, env, corsHeaders);
             }
 
-            // Route: POST /api/data/migrate - Migrate images from Notion to GitHub
+            // Route: POST /api/data/migrate - Migrate images from Notion to public folder
             if (path === '/api/data/migrate' && request.method === 'POST') {
                 return await this.handleImageMigration(request, env, corsHeaders);
             }
@@ -259,279 +221,11 @@ export default {
         }
     },
 
-    // Check admin authorization
-    isAuthorized(request, env) {
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return false;
-        }
-
-        const token = authHeader.split(' ')[1];
-        return token === env.ADMIN_TOKEN || token === 'admin-token';
-    },
-
-    // Handle sending email via SendGrid
-    async handleSendEmail(request, env, corsHeaders) {
-        try {
-            const { to, subject, message, from } = await request.json();
-
-            // Validate input
-            if (!to || !subject || !message) {
-                return new Response(JSON.stringify({
-                    success: false,
-                    error: 'Missing required fields'
-                }), {
-                    status: 400,
-                    headers: corsHeaders,
-                });
-            }
-
-            // Use SendGrid API
-            const emailData = {
-                personalizations: [
-                    {
-                        to: [{ email: to }],
-                        subject: subject
-                    }
-                ],
-                from: { email: from || 'admin@ayeshmantha.net' },
-                content: [
-                    {
-                        type: 'text/plain',
-                        value: message
-                    }
-                ]
-            };
-
-            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(emailData),
-            });
-
-            if (response.ok) {
-                return new Response(JSON.stringify({
-                    success: true,
-                    message: 'Email sent successfully'
-                }), {
-                    headers: corsHeaders,
-                });
-            } else {
-                throw new Error(`SendGrid error: ${response.status}`);
-            }
-
-        } catch (error) {
-            console.error('Email sending error:', error);
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'Failed to send email',
-                details: error.message
-            }), {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-    },
-
-    // Handle Notion backup
-    async handleNotionBackup(request, env, corsHeaders) {
-        try {
-            // Fetch all projects from Notion
-            const response = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
-                    'Notion-Version': '2022-06-28',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({}),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Notion API error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            const projects = data.results || [];
-
-            // Create backup data
-            const backupData = {
-                projects: projects,
-                timestamp: new Date().toISOString(),
-                count: projects.length,
-                metadata: {
-                    version: '1.0.0',
-                    source: 'notion',
-                    backup_type: 'full'
-                }
-            };
-
-            // Store backup in KV storage for history
-            if (env.BACKUP_KV) {
-                const backupKey = `backup-${Date.now()}`;
-                await env.BACKUP_KV.put(backupKey, JSON.stringify(backupData));
-            }
-
-            return new Response(JSON.stringify({
-                success: true,
-                data: backupData
-            }), {
-                headers: corsHeaders,
-            });
-
-        } catch (error) {
-            console.error('Backup error:', error);
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'Failed to create backup',
-                details: error.message
-            }), {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-    },
-
-    // Handle backup history
-    async handleBackupHistory(request, env, corsHeaders) {
-        try {
-            if (!env.BACKUP_KV) {
-                return new Response(JSON.stringify({
-                    backups: []
-                }), {
-                    headers: corsHeaders,
-                });
-            }
-
-            // List recent backups (simplified - in production you'd want pagination)
-            const list = await env.BACKUP_KV.list({ prefix: 'backup-' });
-            const backups = [];
-
-            for (const key of list.keys.slice(0, 10)) { // Last 10 backups
-                const backup = await env.BACKUP_KV.get(key.name);
-                if (backup) {
-                    backups.push(JSON.parse(backup));
-                }
-            }
-
-            return new Response(JSON.stringify({
-                backups: backups.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-            }), {
-                headers: corsHeaders,
-            });
-
-        } catch (error) {
-            console.error('Backup history error:', error);
-            return new Response(JSON.stringify({
-                backups: [],
-                error: error.message
-            }), {
-                headers: corsHeaders,
-            });
-        }
-    },
-
-    // Handle restore from backup
-    async handleRestoreBackup(request, env, corsHeaders) {
-        try {
-            const backupData = await request.json();
-
-            // Validate backup data
-            if (!backupData.projects || !Array.isArray(backupData.projects)) {
-                throw new Error('Invalid backup data');
-            }
-
-            // In a real implementation, you would restore to Notion
-            // For now, just validate and return success
-            return new Response(JSON.stringify({
-                success: true,
-                message: `Restored ${backupData.projects.length} projects`,
-                timestamp: new Date().toISOString()
-            }), {
-                headers: corsHeaders,
-            });
-
-        } catch (error) {
-            console.error('Restore error:', error);
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'Failed to restore backup',
-                details: error.message
-            }), {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-    },
-
-    // Handle Notion sync
-    async handleNotionSync(request, env, corsHeaders) {
-        try {
-            // Fetch latest projects from Notion
-            const response = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
-                    'Notion-Version': '2022-06-28',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sorts: [
-                        {
-                            property: 'Last edited time',
-                            direction: 'descending'
-                        }
-                    ]
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Notion API error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            const projects = data.results.map(page => {
-                return {
-                    id: page.id,
-                    title: page.properties.Title?.title[0]?.plain_text || 'Untitled',
-                    description: page.properties.Description?.rich_text[0]?.plain_text || '',
-                    category: page.properties.Category?.select?.name || 'other',
-                    technologies: page.properties.Technologies?.multi_select?.map(tech => tech.name) || [],
-                    date: page.properties.Date?.date?.start || new Date().toISOString().split('T')[0],
-                    image: getImageUrl(page.properties['Image URL']?.files, page.properties),
-                };
-            });
-
-            return new Response(JSON.stringify({
-                success: true,
-                projects: projects,
-                count: projects.length,
-                timestamp: new Date().toISOString()
-            }), {
-                headers: corsHeaders,
-            });
-
-        } catch (error) {
-            console.error('Sync error:', error);
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'Failed to sync with Notion',
-                details: error.message
-            }), {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-    },
-
     // Enhanced data synchronization with GitHub integration
     async handleDataSync(request, env, corsHeaders) {
         try {
             const { force = false, includeImages = true } = await request.json().catch(() => ({}));
-            
+
             // Step 1: Fetch all projects from Notion
             const notionResponse = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
                 method: 'POST',
@@ -557,7 +251,7 @@ export default {
             const notionData = await notionResponse.json();
             const projects = [];
             const syncTimestamp = new Date().toISOString();
-            
+
             // Step 2: Process each project and fetch detailed content
             for (const page of notionData.results) {
                 try {
@@ -609,17 +303,6 @@ export default {
                 githubUpdateResult = await this.updateGitHubPublicFolder(projects, env, syncTimestamp);
             }
 
-            // Step 4: Store sync metadata in KV storage
-            if (env.BACKUP_KV) {
-                const syncMetadata = {
-                    timestamp: syncTimestamp,
-                    projectCount: projects.length,
-                    githubUpdated: !!githubUpdateResult?.success,
-                    projects: projects.map(p => ({ id: p.id, title: p.title, lastUpdated: p.metadata.lastUpdated }))
-                };
-                await env.BACKUP_KV.put(`data-sync-${Date.now()}`, JSON.stringify(syncMetadata));
-            }
-
             return new Response(JSON.stringify({
                 success: true,
                 message: 'Data synchronization completed',
@@ -651,99 +334,11 @@ export default {
         }
     },
 
-    // Create comprehensive backup to GitHub data branch
-    async handleDataBackup(request, env, corsHeaders) {
-        try {
-            const { includeProjects = true, includeImages = false } = await request.json().catch(() => ({}));
-            
-            // Fetch all data from Notion
-            const notionResponse = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${env.NOTION_TOKEN}`,
-                    'Notion-Version': '2022-06-28',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({}),
-            });
-
-            if (!notionResponse.ok) {
-                throw new Error(`Notion API error: ${notionResponse.status}`);
-            }
-
-            const data = await notionResponse.json();
-            const backupTimestamp = new Date().toISOString();
-            
-            const backupData = {
-                version: '2.0.0',
-                type: 'comprehensive',
-                timestamp: backupTimestamp,
-                metadata: {
-                    source: 'notion',
-                    projectCount: data.results.length,
-                    includeImages,
-                    includeProjects
-                },
-                projects: data.results,
-                schema: {
-                    description: 'Full Notion database backup with enhanced metadata',
-                    format: 'notion-api-v2022-06-28'
-                }
-            };
-
-            // Store in KV for history
-            if (env.BACKUP_KV) {
-                const backupKey = `comprehensive-backup-${Date.now()}`;
-                await env.BACKUP_KV.put(backupKey, JSON.stringify(backupData));
-            }
-
-            // Update GitHub public folder if token available
-            let githubBackupResult = null;
-            if (env.GITHUB_TOKEN) {
-                githubBackupResult = await this.createGitHubPublicBackup(backupData, env);
-            }
-
-            return new Response(JSON.stringify({
-                success: true,
-                message: 'Comprehensive backup created',
-                data: {
-                    timestamp: backupTimestamp,
-                    projectCount: data.results.length,
-                    size: JSON.stringify(backupData).length,
-                    githubBackup: githubBackupResult?.success || false
-                }
-            }), {
-                headers: corsHeaders,
-            });
-
-        } catch (error) {
-            console.error('Data backup error:', error);
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'Failed to create data backup',
-                details: error.message
-            }), {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-    },
-
     // Get synchronization status
     async handleDataStatus(request, env, corsHeaders) {
         try {
             // Get last sync info from KV
             let lastSync = null;
-            if (env.BACKUP_KV) {
-                const list = await env.BACKUP_KV.list({ prefix: 'data-sync-' });
-                if (list.keys.length > 0) {
-                    const latestKey = list.keys.sort((a, b) => b.name.localeCompare(a.name))[0];
-                    const syncData = await env.BACKUP_KV.get(latestKey.name);
-                    if (syncData) {
-                        lastSync = JSON.parse(syncData);
-                    }
-                }
-            }
 
             // Check GitHub public folder status (if token available)
             let githubStatus = null;
@@ -757,14 +352,12 @@ export default {
                 github: githubStatus,
                 endpoints: {
                     sync: '/api/data/sync',
-                    backup: '/api/data/backup',
                     status: '/api/data/status',
                     migrate: '/api/data/migrate'
                 },
                 features: {
                     notionSync: !!env.NOTION_TOKEN,
                     githubIntegration: !!env.GITHUB_TOKEN,
-                    kvStorage: !!env.BACKUP_KV,
                     imageManagement: true
                 }
             }), {
@@ -786,13 +379,13 @@ export default {
     async handleImageMigration(request, env, corsHeaders) {
         try {
             const { projectIds = [], downloadImages = true } = await request.json().catch(() => ({}));
-            
+
             if (!env.GITHUB_TOKEN) {
                 throw new Error('GitHub token required for image migration');
             }
 
             const migrationResults = [];
-            
+
             // If no specific project IDs provided, get all projects
             if (projectIds.length === 0) {
                 const response = await fetch(`https://api.notion.com/v1/databases/${env.NOTION_DATABASE_ID}/query`, {
@@ -863,10 +456,10 @@ export default {
     // Helper: Extract gallery images from Notion properties
     extractGalleryImages(properties) {
         const galleryImages = [];
-        
+
         // Look for additional image properties
         const imagePropertyNames = ['Gallery', 'gallery', 'Screenshots', 'screenshots', 'Additional Images'];
-        
+
         for (const propName of imagePropertyNames) {
             const prop = properties[propName];
             if (prop?.files && Array.isArray(prop.files)) {
@@ -879,7 +472,7 @@ export default {
                 });
             }
         }
-        
+
         return galleryImages;
     },
 
@@ -908,19 +501,15 @@ export default {
                 projectCount: projects.length,
                 syncHistory: [], // In production, you'd maintain this history
                 structure: {
-                    projects: 'Individual project data files',
-                    backups: 'Notion database backups'
+                    projects: 'Individual project data files'
                 },
                 endpoints: {
-                    sync: '/api/data/sync',
-                    backup: '/api/data/backup',
-                    restore: '/api/data/restore'
+                    sync: '/api/data/sync'
                 },
                 access: {
                     baseUrl: 'https://ayeshmantham.github.io/data/',
                     projects: 'projects/{project-id}.json',
-                    metadata: 'metadata.json',
-                    backups: 'backups/{backup-file}.json'
+                    metadata: 'metadata.json'
                 }
             };
 
@@ -928,9 +517,9 @@ export default {
             const updatePromises = projects.map(async (project) => {
                 const filePath = `public/data/projects/${project.id}.json`;
                 const content = JSON.stringify(project, null, 2);
-                
+
                 return this.updateGitHubFile(
-                    owner, repo, branch, filePath, content, 
+                    owner, repo, branch, filePath, content,
                     `Update project data for ${project.title}`, env.GITHUB_TOKEN
                 );
             });
@@ -938,7 +527,7 @@ export default {
             // Update metadata file
             updatePromises.push(
                 this.updateGitHubFile(
-                    owner, repo, branch, 'public/data/metadata.json', 
+                    owner, repo, branch, 'public/data/metadata.json',
                     JSON.stringify(metadataContent, null, 2),
                     `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
                 )
@@ -958,7 +547,7 @@ export default {
     async updateGitHubFile(owner, repo, branch, path, content, message, token) {
         try {
             const encodedContent = btoa(unescape(encodeURIComponent(content)));
-            
+
             // Get current file SHA (if exists)
             let sha = null;
             try {
@@ -968,7 +557,7 @@ export default {
                         'Accept': 'application/vnd.github.v3+json',
                     },
                 });
-                
+
                 if (getResponse.ok) {
                     const fileData = await getResponse.json();
                     sha = fileData.sha;
@@ -1003,30 +592,6 @@ export default {
         } catch (error) {
             console.error(`Error updating ${path}:`, error);
             return false;
-        }
-    },
-
-    // Helper: Create GitHub public backup
-    async createGitHubPublicBackup(backupData, env) {
-        try {
-            const owner = 'AyeshmanthaM';
-            const repo = 'AyeshmanthaM.github.io';
-            const branch = 'main';
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filePath = `public/data/backups/full-backup-${timestamp}.json`;
-            
-            const success = await this.updateGitHubFile(
-                owner, repo, branch, filePath,
-                JSON.stringify(backupData, null, 2),
-                `Create comprehensive backup - ${timestamp}`,
-                env.GITHUB_TOKEN
-            );
-
-            return { success, filePath };
-
-        } catch (error) {
-            console.error('GitHub backup error:', error);
-            return { success: false, error: error.message };
         }
     },
 
@@ -1078,7 +643,7 @@ export default {
 
             const pageData = await pageResponse.json();
             const projectTitle = pageData.properties.Title?.title[0]?.plain_text || 'Untitled';
-            
+
             // Extract image URLs
             const imageUrls = [];
             const primaryImage = getImageUrl(pageData.properties['Image URL']?.files, pageData.properties);
@@ -1094,7 +659,7 @@ export default {
 
             // If downloadImages is true, you would implement actual download and upload logic here
             // For now, we'll just return the migration plan
-            
+
             return {
                 projectId,
                 title: projectTitle,
