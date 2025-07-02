@@ -2,12 +2,21 @@
   "version": "1.0.0",
   "location": "public/data",
   "purpose": "Portfolio project data stored in public folder",
-  "lastSync": "2025-07-02T19:56:22.015Z",
+<<<<<<< HEAD
+  "lastSync": "2025-07-02T20:40:13.983Z",
+  "projectCount": 3,
+  "syncHistory": [
+    {
+      "timestamp": "2025-07-02T20:40:13.983Z",
+      "projectCount": 3,
+=======
+  "lastSync": "2025-07-02T20:29:23.703Z",
   "projectCount": 2,
   "syncHistory": [
     {
-      "timestamp": "2025-07-02T19:56:22.015Z",
+      "timestamp": "2025-07-02T20:29:23.703Z",
       "projectCount": 2,
+>>>>>>> 7cdd15f498b610cc591c24bacfa299f00097bd44
       "deletedCount": 0,
       "method": "cloudflare-worker"
     }
@@ -24,6 +33,12 @@
     "metadata": "metadata.json"
   },
   "projects": [
+    {
+      "id": "project-224e0b952ee7803ebe09c62a26175030",
+      "title": "test night",
+      "category": "software",
+      "filename": "project-224e0b952ee7803ebe09c62a26175030.json"
+    },
     {
       "id": "project-220e0b952ee7802fa033e6a18d2bc723",
       "title": "teset",
