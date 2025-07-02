@@ -1,0 +1,32 @@
+{
+  "id": "project-220e0b952ee7802485f0df6c3243b8c3",
+  "title": "RGB LED Cube",
+  "description": "no",
+  "fullDescription": "# Project Overview\n\nමෙහිදී ස්වයං අධ්‍යනය සහ අශාවක් මත කල නිර්මානයක් ය. මෙහිදී ක්‍රමලේකනයට arduino ide යොදාගෙන ඇති අතර, ආලෝක රටා නිර්මාණය සදහා processing ide software යොදාගනු ලැබීය… \n\nArduino ic එක වෙනම අරගෙන dot borad එකක මම සකිට් එක සකස් කරගත්ත. rgb බල්බ් 8 x 8 x 8 යොදාගත් නිසා බල්බ් 64ක් යොදාගත් අතර ground එක levels වලට යොදාගත් අතර හැම raw එකකම rgb පින් පහලට ගෙනත් ඇත. සියලුම පින් shft ic යොදාගෙන ක්‍රියාත්මක කිරීම සිදු කරයි. එමගින් මා හට sift ic ක්‍රියාකරන ආකරය ගැනද අවබෝදයක් ගැනීමට හැකි විය. \n\nProcessing ide එක යොදාගෙන රටා නිර්මානය සිදු කර අතර serial communication මගින් දත්ත හුවමාරු කර ගනී. මෙම tool එක බාවිතා කිරීම මගින් srial communication සිදුවන ආකාරය එහිදි මුහුනපාන ගැටලු අවබෝදයක්ද java programing ගැනද දැනුම වැඩිදියුනු කිරීමට හැකියාවක් මෙමගින් ලැබුන. \n\n## Technical Implementation\n\n## Challenges & Solutions\n\n## Results & Impact\n\n## Future Improvements",
+  "category": "automation",
+  "technologies": [
+    "Arduino",
+    "C++"
+  ],
+  "date": "2025-06-01",
+  "status": "Published",
+  "images": {
+    "primary": "https://prod-files-secure.s3.us-west-2.amazonaws.com/142e0c2a-1b65-433e-927e-70364d42a7e0/72594876-d122-4983-84e5-331738d668be/may14_stage.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB46657GKAJEQ%2F20250702%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250702T195605Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMiJHMEUCIQCWJfBnfb2OseR1JvhBmuRUnoIDrpcsSF6Um%2BzMEUrCbwIgWgv9Xc51ANN%2BNQ6ftUzhGQWFH0TNPVdudyoCy38oVH4qiAQI9P%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARAAGgw2Mzc0MjMxODM4MDUiDFYPaO2MkJ%2B9cuQKuCrcA8qceVVXx6VssydOH9zd99OSeMtehN8B0tQ4SOpI8lkwzj%2BuKalSurzrnhRFzteABJSyEcg7e9CgE52KYshur8iEH8WI73IcplA%2B9%2BnDpkhLU9ndLccSv9pDoMtEujAEZqtxuY48g3UrDzxN6pHZE2ONN4OQQQE7b8b6T9Ooe4j%2BENdTCsswfqNsMzZwaxw7HjI5oaPOK27RThWQCnlJekgoOdOvi1ZOHo%2Bb%2FjHqGwl0dCp6TKhIl2IjFsOPTCN9PJlT1EibXojpdbtS0UxAGZTeb%2F29RYrJgOmOGbbO8WOuGvi%2FiX2y4eKGowgYlq2085XZHXQ7d68DuS7MHIFcHneJpFYWA3MpHQBwg8XOYA73Xs4PB77CfQ%2FcjQ%2BPjEUFXZNVJmX82Edtzq6pLxzqSfOwUlSgLpq26rrbDjTG4zf0gaq1NC1JWATnkMQXLca1%2FRZ87OB1d10dYJKAmnoO4e7RYct4OX40EwUivYub%2Fv5SEo%2FO2KUJFH%2BFiHV2w711GxgwSVEBPdHdBA0jqgpWdaAo6MBIjFmWV%2F5ZPQpWyLFy%2FIewRWCUaC2Acow0YXwum4ZTNMaLtLwFm1oDV07XRc4BLNmwQep0Io84fjgNQTkypclkyPw1HZMm4UTxMKX2lcMGOqUB8rvEwYJV0ya185fthdublB5yP1uSS%2FsJqmE0XwV2oi4Jsg1d%2BicF%2BxxfDWpmSEZpW8Hbp3wn6vGUz5R2c5g9C157JpQCE5cM8Ull7JS9SC5bimy8ZJLIPCyu0d%2BQc0dD9awJzqcNQ430rLKhZVbl3edR4nTf4TXUDqgQ0zImM9XKhZuCkCj5yZIfgNIR4CWtznl%2BbST0W9TC6IOjR9ZxN3ocicym&X-Amz-Signature=8f978b40d96aafed6c292d2a71e49fdca99c4c167540fff805fda6dffbbe3060&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "gallery": [],
+    "local": {
+      "primary": "/images/projects/220e0b952ee7802485f0df6c3243b8c3/primary.jpg",
+      "gallery": []
+    }
+  },
+  "links": {
+    "github": "",
+    "demo": "",
+    "documentation": ""
+  },
+  "metadata": {
+    "notionId": "220e0b95-2ee7-8024-85f0-df6c3243b8c3",
+    "lastUpdated": "2025-06-28T19:14:00.000Z",
+    "syncedAt": "2025-07-02T19:56:05.538Z",
+    "version": 1
+  }
+}
