@@ -282,8 +282,7 @@ export default {
                         status: page.properties.Status?.select?.name || 'Published',
                         images: {
                             primary: getImageUrl(page.properties['Image URL']?.files, page.properties),
-                            gallery: this.extractGalleryImages(page.properties),
-                            local: {
+                            gallery: this.extractGalleryImages(page.properties), local: {
                                 primary: `/images/projects/${page.id.replace(/-/g, '')}/primary.jpg`,
                                 gallery: []
                             }
@@ -438,7 +437,7 @@ export default {
                 }
             }
 
-            // Process each project for image migration to public/images/projects
+            // Process each project for image migration to images/projects
             for (const projectId of projectIds) {
                 try {
                     const migrationResult = await this.migrateProjectImages(projectId, env, downloadImages);
@@ -499,7 +498,7 @@ export default {
 
                     const imageData = await this.downloadImage(project.images.primary);
                     if (imageData) {
-                        const imagePath = `public/images/projects/${projectIdClean}/primary.jpg`;
+                        const imagePath = `images/projects/${projectIdClean}/primary.jpg`;
                         const commitMessage = `Update primary image for ${project.title}`;
 
                         const uploadSuccess = await this.uploadImageToGitHub(
@@ -549,7 +548,7 @@ export default {
 
                             const imageData = await this.downloadImage(galleryImageUrl);
                             if (imageData) {
-                                const imagePath = `public/images/projects/${projectIdClean}/gallery-${i + 1}.jpg`;
+                                const imagePath = `images/projects/${projectIdClean}/gallery-${i + 1}.jpg`;
                                 const commitMessage = `Update gallery image ${i + 1} for ${project.title}`;
 
                                 const uploadSuccess = await this.uploadImageToGitHub(
@@ -813,7 +812,7 @@ export default {
 
             // Step 2: Delete orphaned files
             const deletePromises = filesToDelete.map(async (filename) => {
-                const filePath = `public/data/projects/${filename}`;
+                const filePath = `data/projects/${filename}`;
                 const result = await this.deleteGitHubFile(
                     owner, repo, branch, filePath,
                     `Remove deleted project: ${filename}`, env.GITHUB_TOKEN
@@ -824,8 +823,8 @@ export default {
             // Step 3: Update metadata.json
             const metadataContent = {
                 version: '1.0.0',
-                location: 'public/data',
-                purpose: 'Portfolio project data stored in public folder',
+                location: 'data',
+                purpose: 'Portfolio project data stored in data folder',
                 lastSync: timestamp,
                 projectCount: projects.length,
                 syncHistory: [
@@ -860,7 +859,7 @@ export default {
             const updateResults = [];
 
             for (const project of projects) {
-                const filePath = `public/data/projects/${project.id}.json`;
+                const filePath = `data/projects/${project.id}.json`;
                 const content = JSON.stringify(project, null, 2);
 
                 const result = await this.updateGitHubFile(
@@ -877,12 +876,12 @@ export default {
             console.log(`📝 Updating metadata file...`);
             await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay before metadata
             const metadataResult = await this.updateGitHubFile(
-                owner, repo, branch, 'public/data/metadata.json',
+                owner, repo, branch, 'data/metadata.json',
                 JSON.stringify(metadataContent, null, 2),
                 `Update metadata - sync ${timestamp}`, env.GITHUB_TOKEN
             );
             updateResults.push({
-                path: 'public/data/metadata.json',
+                path: 'data/metadata.json',
                 success: metadataResult,
                 action: 'updated',
                 project: 'metadata'
@@ -1084,8 +1083,8 @@ export default {
             const repo = 'AyeshmanthaM.github.io';
             const branch = 'gh-pages';
 
-            // Check if public/data/metadata.json exists
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/public/data/metadata.json?ref=${branch}`, {
+            // Check if data/metadata.json exists
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data/metadata.json?ref=${branch}`, {
                 headers: {
                     'Authorization': `token ${env.GITHUB_TOKEN}`,
                     'Accept': 'application/vnd.github.v3+json',
@@ -1165,7 +1164,7 @@ export default {
         try {
             console.log(`🔍 Fetching existing project files from ${owner}/${repo}:${branch}`);
 
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/public/data/projects?ref=${branch}`, {
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data/projects?ref=${branch}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/vnd.github.v3+json',
@@ -1182,7 +1181,7 @@ export default {
                 console.log(`📁 Found ${jsonFiles.length} existing project files:`, jsonFiles);
                 return jsonFiles;
             } else if (response.status === 404) {
-                console.log(`📁 public/data/projects directory doesn't exist yet`);
+                console.log(`📁 data/projects directory doesn't exist yet`);
                 return [];
             } else {
                 const errorText = await response.text();
