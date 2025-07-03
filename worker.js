@@ -203,6 +203,11 @@ export default {
                 });
             }
 
+            // Route: POST /api/send-email - Send contact form emails
+            if (path === '/api/send-email' && request.method === 'POST') {
+                return await this.handleSendEmail(request, env, corsHeaders);
+            }
+
             // 404 for unmatched routes
             return new Response(JSON.stringify({ error: 'Not found' }), {
                 status: 404,
@@ -1311,6 +1316,190 @@ export default {
         } catch (error) {
             console.error('❌ Error converting to base64:', error);
             throw new Error('Failed to convert image to base64');
+        }
+    },
+
+    // Handle sending email via EmailJS
+    async handleSendEmail(request, env, corsHeaders) {
+        try {
+            const { name, email, subject, message } = await request.json();
+
+            // Validate input
+            if (!name || !email || !subject || !message) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: 'All fields are required'
+                }), {
+                    status: 400,
+                    headers: corsHeaders,
+                });
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: 'Invalid email format'
+                }), {
+                    status: 400,
+                    headers: corsHeaders,
+                });
+            }
+
+            // Send email using your preferred service
+            const emailResult = await this.sendNotificationEmail({
+                name,
+                email,
+                subject,
+                message
+            }, env);
+
+            if (emailResult.success) {
+                return new Response(JSON.stringify({
+                    success: true,
+                    message: 'Email sent successfully'
+                }), {
+                    headers: corsHeaders,
+                });
+            } else {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: emailResult.error || 'Failed to send email'
+                }), {
+                    status: 500,
+                    headers: corsHeaders,
+                });
+            }
+
+        } catch (error) {
+            console.error('Send email error:', error);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Internal server error'
+            }), {
+                status: 500,
+                headers: corsHeaders,
+            });
+        }
+    },
+
+    // Send notification email using Resend
+    async sendNotificationEmail(data, env) {
+        try {
+            // Using Resend API
+            if (env.RESEND_API_KEY) {
+                const response = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: 'noreply@ayeshmantha.net',
+                        to: ['maduranga.ayeshmantha@gmail.com'],
+                        subject: `Contact Form: ${data.subject}`,
+                        html: `
+                            <h2>New Contact Form Submission</h2>
+                            <p><strong>Name:</strong> ${data.name}</p>
+                            <p><strong>Email:</strong> ${data.email}</p>
+                            <p><strong>Subject:</strong> ${data.subject}</p>
+                            <p><strong>Message:</strong></p>
+                            <p>${data.message.replace(/\n/g, '<br>')}</p>
+                            <hr>
+                            <p><small>Sent from ayeshmantha.net contact form</small></p>
+                        `,
+                        reply_to: data.email,
+                    }),
+                });
+
+                if (response.ok) {
+                    return { success: true };
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Resend API error');
+                }
+            }
+
+            // Option 2: Using SendGrid API
+            if (env.SENDGRID_API_KEY) {
+                const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        personalizations: [{
+                            to: [{ email: 'info@ayeshmantha.net' }],
+                            subject: `Contact Form: ${data.subject}`,
+                        }],
+                        from: { email: 'noreply@ayeshmantha.net', name: 'Ayeshmantha Portfolio' },
+                        reply_to: { email: data.email, name: data.name },
+                        content: [{
+                            type: 'text/html',
+                            value: `
+                                <h2>New Contact Form Submission</h2>
+                                <p><strong>Name:</strong> ${data.name}</p>
+                                <p><strong>Email:</strong> ${data.email}</p>
+                                <p><strong>Subject:</strong> ${data.subject}</p>
+                                <p><strong>Message:</strong></p>
+                                <p>${data.message.replace(/\n/g, '<br>')}</p>
+                                <hr>
+                                <p><small>Sent from ayeshmantha.net contact form</small></p>
+                            `,
+                        }],
+                    }),
+                });
+
+                if (response.ok) {
+                    return { success: true };
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.errors?.[0]?.message || 'SendGrid API error');
+                }
+            }
+
+            // Option 3: Using Mailgun API
+            if (env.MAILGUN_API_KEY && env.MAILGUN_DOMAIN) {
+                const formData = new FormData();
+                formData.append('from', 'noreply@ayeshmantha.net');
+                formData.append('to', 'info@ayeshmantha.net');
+                formData.append('subject', `Contact Form: ${data.subject}`);
+                formData.append('html', `
+                    <h2>New Contact Form Submission</h2>
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Email:</strong> ${data.email}</p>
+                    <p><strong>Subject:</strong> ${data.subject}</p>
+                    <p><strong>Message:</strong></p>
+                    <p>${data.message.replace(/\n/g, '<br>')}</p>
+                    <hr>
+                    <p><small>Sent from ayeshmantha.net contact form</small></p>
+                `);
+                formData.append('h:Reply-To', data.email);
+
+                const response = await fetch(`https://api.mailgun.net/v3/${env.MAILGUN_DOMAIN}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Basic ${btoa(`api:${env.MAILGUN_API_KEY}`)}`,
+                    },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    return { success: true };
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Mailgun API error');
+                }
+            }
+
+            // If no email service is configured, return error
+            throw new Error('RESEND_API_KEY is not configured. Please set it in your Cloudflare Worker environment variables.');
+
+        } catch (error) {
+            console.error('Email service error:', error);
+            return { success: false, error: error.message };
         }
     }
 };
